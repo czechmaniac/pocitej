@@ -49,6 +49,7 @@ const server=spawn(process.env.PHP_BINARY||'php',['-n','-S','127.0.0.1:8765','-t
   await page.reload();await page.waitForSelector('#math-view:visible');
   assert.equal(await page.evaluate(()=>statistics.correct),initial.correct+1);
   await page.setViewportSize({width:390,height:844});
+  await page.waitForFunction(()=>Array.from(document.querySelectorAll('.exercise')).filter(e=>!e.hidden).length===1);
   assert.equal(await page.locator('.exercise:visible').count(),1);
   // Signed-in fixture checks one-value payloads, cloud radio feedback, battle API and retries.
   let prefs={operation:'addition',range:10,multiplicationLimit:100,count:6,gender:'boy',largeText:false};
