@@ -6,6 +6,7 @@
   <title>Počítáme ♡ — Malé příklady, velké pokroky</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect rx='9' width='32' height='32' fill='%23ff851b'/%3E%3Cpath d='M8 16h16M16 8v16' stroke='white' stroke-width='4'/%3E%3C/svg%3E">
   <script src="analytics.js?v=usage-1" defer></script>
+  <link rel="stylesheet" href="feedback.css?v=1"><script src="feedback.js?v=1" defer></script>
   <link rel="stylesheet" href="style.css?v=usage-1"><script src="exercises.js?v=usage-1" defer></script><script src="script.js?v=usage-1" defer></script><script src="battle.js?v=usage-1" defer></script><script src="cloud.js?v=usage-1" defer></script>
 
   <link rel="stylesheet" href="battle.css?v=usage-1">
@@ -81,5 +82,20 @@
   </main>
   <p id="storage-note" role="status" hidden>Prohlížeč nepovolil ukládání. Počítání funguje, pokroky se ale po zavření neuchovají.</p>
 </div>
+<button id="feedback-open" type="button" hidden>💡 Poslat nápad</button>
+<dialog id="feedback-dialog" aria-labelledby="feedback-title" aria-describedby="feedback-description">
+  <h2 id="feedback-title">Co bys chtěl změnit nebo přidat?</h2>
+  <p id="feedback-description">Máš nápad na lepší Počítáme? Napiš nám, co ti chybí, co tě baví nebo co nefunguje.</p>
+  <form id="visitor-feedback-form">
+    <label for="feedback-category">O čem nám chceš napsat?</label>
+    <select id="feedback-category" name="category"><option value="idea">Mám nápad</option><option value="problem">Něco nefunguje</option><option value="other">Něco jiného</option></select>
+    <label for="feedback-message">Tvůj návrh</label>
+    <textarea id="feedback-message" name="message" minlength="3" maxlength="1000" required placeholder="Třeba: Chtěl bych další příšeru do soubojů…"></textarea>
+    <label class="feedback-trap" aria-hidden="true">Web <input name="website" tabindex="-1" autocomplete="off"></label>
+    <p class="feedback-privacy">Nepiš sem své jméno, e-mail ani heslo. Zprávu uvidí jen správce webu. Odeslání je dobrovolné.</p>
+    <p role="status" aria-live="polite"></p>
+    <div class="feedback-actions"><button type="button" data-feedback-close>Teď ne</button><button type="submit">Odeslat nápad</button></div>
+  </form>
+</dialog>
 </body>
 </html>

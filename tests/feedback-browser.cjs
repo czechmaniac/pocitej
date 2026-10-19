@@ -1,0 +1,40 @@
+const assert=require('node:assert/strict');
+const {spawn}=require('node:child_process');
+const {chromium}=require('playwright');
+const server=spawn(process.env.PHP_BINARY||'php',['-n','-S','127.0.0.1:8767','-t',require('node:path').resolve(__dirname,'..')],{stdio:'ignore'});
+(async()=>{let browser;try{
+  browser=await chromium.launch({headless:true,...(process.env.BROWSER_CHANNEL?{channel:process.env.BROWSER_CHANNEL}:{})});
+  const page=await browser.newPage({viewport:{width:390,height:844}}),errors=[],submissions=[];
+  page.on('pageerror',e=>errors.push(e.message));
+  await page.route('**/googletagmanager.com/**',r=>r.abort());
+  await page.route('**/api/feedback.php',async route=>{
+    if(route.request().method()==='GET')return route.fulfill({json:{enabled:true,csrf:'test-token'}});
+    const body=route.request().postDataJSON();submissions.push(body);
+    assert.equal(route.request().headers()['x-csrf-token'],'test-token');
+    await route.fulfill(submissions.length===1?{status:503,json:{error:'Zkus to znovu.'}}:{json:{ok:true}});
+  });
+  await page.goto('http://127.0.0.1:8767');
+  await page.waitForSelector('#feedback-dialog[open]');
+  assert(await page.locator('#feedback-message').isEditable());
+  if(process.env.FEEDBACK_SCREENSHOT)await page.screenshot({path:process.env.FEEDBACK_SCREENSHOT});
+  assert(await page.evaluate(()=>{const r=document.querySelector('#feedback-dialog').getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight;}));
+  await page.keyboard.press('Escape');assert.equal(await page.locator('#feedback-dialog').isVisible(),false);
+  await page.reload();await page.waitForSelector('#feedback-open:visible');assert.equal(await page.locator('#feedback-dialog').isVisible(),false);
+  await page.locator('#feedback-open').click();
+  const text='Chtěl bych novou příšeru <script>alert(1)</script>';
+  await page.locator('#feedback-message').fill(text);await page.locator('#feedback-category').selectOption('idea');
+  await page.locator('#feedback-dialog [type="submit"]').click();await page.waitForSelector('#feedback-dialog [role="status"]:text("Zkus to znovu.")');
+  assert.equal(await page.locator('#feedback-message').inputValue(),text);
+  await page.locator('#feedback-dialog [type="submit"]').click();await page.waitForSelector('#feedback-dialog [role="status"]:text("Děkujeme")');
+  assert.equal(submissions.length,2);assert.equal(submissions[0].id,submissions[1].id);assert.equal(submissions[1].message,text);
+  assert.deepEqual(Object.keys(submissions[1]).sort(),['category','id','message','website']);
+  assert(!(await page.evaluate(()=>JSON.stringify(window.dataLayer||[]))).includes('novou příšeru'));
+  await page.locator('[data-feedback-close]').click();
+  await page.evaluate(()=>localStorage.setItem('pocitame-feedback-prompt-v1',String(Date.now()-8*86400000)));
+  await page.reload();await page.waitForSelector('#feedback-dialog[open]');await page.locator('[data-feedback-close]').click();
+  // Disabled/unavailable service never displays an unusable form.
+  await page.unroute('**/api/feedback.php');await page.route('**/api/feedback.php',r=>r.fulfill({json:{enabled:false}}));
+  await page.evaluate(()=>localStorage.removeItem('pocitame-feedback-prompt-v1'));await page.reload();await page.waitForTimeout(150);
+  assert.equal(await page.locator('#feedback-dialog').isVisible(),false);assert.equal(await page.locator('#feedback-open').isVisible(),false);
+  assert.deepEqual(errors,[]);console.log('PASS: weekly feedback dialog, keyboard dismissal, mobile layout, retries, privacy and disabled service');
+}finally{if(browser)await browser.close();server.kill();}})().catch(e=>{console.error(e);process.exitCode=1;});

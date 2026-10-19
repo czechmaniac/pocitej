@@ -1,0 +1,21 @@
+#feedback-dialog{box-sizing:border-box;width:min(520px,calc(100% - 32px));max-height:calc(100dvh - 32px);overflow:auto;border:0;border-radius:22px;padding:26px;color:#263d51;background:#fffaf3;box-shadow:0 20px 80px #172c4566;font-family:inherit}
+#feedback-dialog::backdrop{background:#132b4666}
+#feedback-dialog h2{margin:0 0 12px;font-size:1.6rem}
+#feedback-dialog label{display:block;margin:16px 0 6px;font-weight:600}
+#feedback-dialog textarea,#feedback-dialog select{box-sizing:border-box;width:100%;padding:12px;border:1px solid #a8bdca;border-radius:10px;font:inherit;background:white;color:#263d51}
+#feedback-dialog textarea{min-height:130px;resize:vertical}
+#feedback-dialog .feedback-privacy{font-size:.9rem;color:#526576}
+#feedback-dialog .feedback-actions{display:flex;flex-wrap:wrap;gap:12px;justify-content:flex-end;margin-top:16px}
+#feedback-dialog button,#feedback-open{font:inherit;cursor:pointer;padding:10px 16px;border:1px solid #b7c9d5;border-radius:12px;background:white;color:#263d51;min-height:44px}
+#feedback-dialog button[type=submit]{background:#ff851b;color:#192d3e;border-color:#ff851b;font-weight:700}
+#feedback-dialog button:disabled{opacity:.6;cursor:wait}
+#feedback-dialog .feedback-trap{display:none}
+#feedback-open{display:block;margin:12px auto;background:#fff9ef}
+#feedback-open[hidden]{display:none}
+.feedback-admin{font-family:system-ui,sans-serif;color:#263d51;background:#eff6fa;margin:0;padding:24px}
+.feedback-admin main{max-width:800px;margin:auto}
+.feedback-admin article{background:white;border-radius:16px;padding:20px;margin:18px 0;overflow-wrap:anywhere}
+.feedback-admin h2{font-size:1.2rem;margin:0}
+.feedback-admin input,.feedback-admin button{font:inherit;padding:10px;margin:6px;border:1px solid #9eb4c4;border-radius:8px}
+.feedback-admin [role=alert]{color:#8f1c16;background:#fff0ec;padding:12px;border-radius:8px}
+.feedback-admin .feedback-message{white-space:pre-wrap}
