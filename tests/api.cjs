@@ -29,7 +29,7 @@ const server=spawn(php,['-S','127.0.0.1:8766','-t',temp],{stdio:'ignore'});
   assert(first.completed);assert.equal(first.user.statistics.solved,solved);assert.equal(first.user.statistics.correct,correct);assert.equal(first.user.statistics.completedSets,completedSets);
   const retry=await post('check',{setId:s.setId,answers});assert.deepEqual(retry.user.statistics,first.user.statistics);
  }
- const battle=await post('start',{mode:'battle',settings:{operation:'subtraction',range:20}});assert.equal(battle.exercises.length,1);
+ const battle=await post('start',{mode:'battle',settings:{operation:'subtraction',range:20}});assert.equal(battle.exercises.length,1);assert.equal(battle.exercises[0].type,'direct');assert.equal(battle.exercises[0].choices.length,3);
  const e=rules.decorate(battle.exercises[0]),values=e.type==='direct'?[e.result]:[e.decomposition1,e.decomposition2,e.result];
  await post('check',{setId:battle.setId,answers:[{index:0,values:values.map(()=>null)}]});
  const repaired=await post('check',{setId:battle.setId,answers:[{index:0,values}]});assert(repaired.completed);assert.equal(repaired.user.statistics.solved,solved+1);assert.equal(repaired.user.statistics.correct,correct);assert.equal(repaired.user.statistics.completedSets,completedSets);

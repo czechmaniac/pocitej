@@ -49,6 +49,7 @@ const server=spawn(process.env.PHP_BINARY||'php',['-n','-S','127.0.0.1:8765','-t
   await page.reload();await page.waitForSelector('#math-view:visible');
   assert.equal(await page.evaluate(()=>statistics.correct),initial.correct+1);
   await page.setViewportSize({width:390,height:844});
+  await page.waitForFunction(()=>Array.from(document.querySelectorAll('.exercise')).filter(e=>!e.hidden).length===1);
   assert.equal(await page.locator('.exercise:visible').count(),1);
   // Signed-in fixture checks one-value payloads, cloud radio feedback, battle API and retries.
   let prefs={operation:'addition',range:10,multiplicationLimit:100,count:6,gender:'boy',largeText:false};
@@ -59,7 +60,7 @@ const server=spawn(process.env.PHP_BINARY||'php',['-n','-S','127.0.0.1:8765','-t
    const req=route.request(),action=new URL(req.url()).searchParams.get('action'),body=req.postDataJSON();let result;
    if(action==='me')result={csrf:'test',user:user()};
    else if(action==='settings'){prefs=body;result={ok:true};}
-   else if(action==='start') {const setId=String(++id),items=rules.pool(body.settings).slice(0,body.mode==='battle'?1:6);sets.set(setId,{items,mode:body.mode,done:false});result={setId,exercises:items,user:user()};}
+   else if(action==='start') {const setId=String(++id),items=rules.pool({...body.settings,mode:body.mode}).filter(e=>body.mode!=='battle'||body.settings.operation!=='subtraction'||(e.a>10&&e.a-e.b<10)).slice(0,body.mode==='battle'?1:6);sets.set(setId,{items,mode:body.mode,done:false});result={setId,exercises:items,user:user()};}
    else if(action==='check'){
     const set=sets.get(body.setId);
     if(failBattle&&set.mode==='battle'){failBattle=false;await route.fulfill({status:503,json:{error:'Test výpadku'}});return;}
@@ -76,6 +77,15 @@ const server=spawn(process.env.PHP_BINARY||'php',['-n','-S','127.0.0.1:8765','-t
   const battleAnswer=await page.locator('#b-question').textContent();const [x,y]=battleAnswer.match(/\d+/g).map(Number);
   await page.locator(`.battle-choice[value="${x+y}"]`).click();await page.waitForSelector('#b-message:text("Test výpadku")');assert.equal(stats.solved,6);
   await page.locator(`.battle-choice[value="${x+y}"]`).click();await page.waitForTimeout(650);assert.equal(stats.solved,7);assert.equal(stats.correct,1);assert.equal(stats.completedSets,1);
+  await set('subtraction',20);
+  await page.locator('[data-view="battle"]').click();
+  await page.waitForFunction(()=>document.querySelector('#b-question').textContent.includes('−')&&!document.querySelector('.battle-choice')?.disabled);
+  assert.equal(await page.locator('#b-decomposition').isVisible(),false);
+  assert.equal(await page.locator('.battle-choice').count(),3);
+  const subtractQuestion=await page.locator('#b-question').innerText();const [minuend,subtrahend]=subtractQuestion.match(/\d+/g).map(Number);
+  assert(minuend>10&&minuend-subtrahend<10);
+  await page.locator('.battle-choice[value="'+(minuend-subtrahend)+'"]').click();await page.waitForTimeout(650);
+  assert.equal(stats.solved,8);assert.equal(stats.correct,2);
   assert.deepEqual(errors,[]);console.log('PASS: guest and cloud worksheets, mobile paging, saved stats, battle accounting and network retry');
  } finally {if(browser)await browser.close();server.kill();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

@@ -11,7 +11,7 @@ const ExerciseRules = (() => {
   }
   function decorate(e) {
     const result = e.operation === 'addition' ? e.a + e.b : e.operation === 'multiplication' ? e.a * e.b : e.a - e.b;
-    const item = {...e, result, type: needsDecomposition(e) ? 'decomposition' : 'direct'};
+    const item = {...e, result, type: e.type !== 'direct' && needsDecomposition(e) ? 'decomposition' : 'direct'};
     if (item.type === 'decomposition') Object.assign(item, {decomposition1:e.a - 10, decomposition2:e.b - (e.a - 10)});
     else if (!item.choices) {
       const wrong = [];
@@ -24,7 +24,7 @@ const ExerciseRules = (() => {
     const items = [], multiplication = p.operation === 'multiplication';
     for (let a=1; a <= (multiplication ? 10 : p.range); a++) {
       for (let b=1; b <= (multiplication ? 10 : p.range); b++) {
-        const e = decorate({operation:p.operation,a,b});
+        const e = decorate({operation:p.operation,a,b,...(p.mode==='battle'?{type:'direct'}:{})});
         if (e.result < 0 || e.result > (multiplication ? p.multiplicationLimit : p.range)) continue;
         items.push(e);
       }
@@ -32,7 +32,7 @@ const ExerciseRules = (() => {
     return items;
   }
   function checks(e, values) {
-    return (needsDecomposition(e) ? [e.a-10,e.b-(e.a-10),e.a-e.b] : [decorate(e).result]).map((n,i) => Number.isInteger(values[i]) && values[i] === n);
+    return (decorate(e).type === 'decomposition' ? [e.a-10,e.b-(e.a-10),e.a-e.b] : [decorate(e).result]).map((n,i) => Number.isInteger(values[i]) && values[i] === n);
   }
   return {needsDecomposition, decorate, pool, shuffle, checks};
 })();
