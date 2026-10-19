@@ -1,0 +1,18 @@
+const assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
+const handlers={},classes=new Set(),calls=[];
+const preferences={operation:'subtraction',range:20,multiplicationLimit:50,count:9,largeText:true,gender:'girl',nickname:'PRIVATE',pin:'1234',id:456};
+const window={location:{protocol:'https:',origin:'https://example.test',pathname:'/',search:'?nickname=PRIVATE'},AppSettings:{getPreferences:()=>({...preferences})},gtag:(...args)=>calls.push(args)};
+const document={body:{classList:{contains:s=>classes.has(s)}},head:{appendChild(){}},createElement:()=>({}),addEventListener:(type,fn)=>handlers[type]=fn,querySelector:()=>({hidden:false})};
+vm.runInNewContext(fs.readFileSync(__dirname+'/../analytics.js','utf8'),{window,document,queueMicrotask:fn=>fn()});
+const events=()=>calls.filter(c=>c[0]==='event');
+window.UsageAnalytics.activity('practice_start');assert.equal(events().length,0);
+classes.add('signed-in');classes.add('guest-mode');
+window.UsageAnalytics.activity('practice_start',{nickname:'PRIVATE',pin:'1234',answer:9,gender:'girl',screen:'math'});
+assert.equal(events().length,2);assert.equal(events()[0][1],'pocitej_open');
+const data=events()[1][2];assert.equal(data.operation,'subtraction');assert.equal(data.exercise_count,'9');assert.equal(data.account_mode,'guest');assert.equal(data.large_text,'on');
+for(const key of ['nickname','pin','answer','gender','id'])assert(!Object.hasOwn(data,key));
+window.UsageAnalytics.activity('private_event');assert.equal(events().length,2);
+window.UsageAnalytics.activity('battle_tool',{tool:'potion',error_kind:'RAW PRIVATE ERROR'});assert.equal(events().at(-1)[2].tool,'potion');assert(!Object.hasOwn(events().at(-1)[2],'error_kind'));
+window['ga-disable-G-1DKYKCDZ49']=true;window.UsageAnalytics.activity('practice_complete');assert.equal(events().length,3);
+window['ga-disable-G-1DKYKCDZ49']=false;window.gtag=()=>{throw Error('blocked')};assert.doesNotThrow(()=>window.UsageAnalytics.activity('battle_start'));
+assert(!JSON.stringify(calls).includes('PRIVATE'));console.log('PASS: analytics whitelist, initial event, settings, opt-out and failure isolation');

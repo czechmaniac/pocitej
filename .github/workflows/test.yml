@@ -22,6 +22,7 @@ jobs:
           node-version: '24'
       - run: npm install --no-save playwright@1.62.1
       - run: npx playwright install --with-deps chromium
+      - run: node tests/analytics.cjs
       - run: node tests/rules.cjs
       - run: php -l api/index.php && php -l api/logic.php
       - run: node tests/browser.cjs
