@@ -30,5 +30,23 @@ module.exports=async function({client,request,config,temp}){
     await client.post('/api/feedback-admin.php',{headers:{Origin:config.origin},form:{csrf,action:'logout'}});
     html=await (await client.get('/api/feedback-admin.php?filter=all')).text();assert(!html.includes('Chci novou příšeru'));
   } finally {await guest.dispose();}
+  // Use a real form submission too: manually supplied Origin headers cannot
+  // detect a Referrer-Policy that strips Origin in the browser.
+  const {chromium}=require('playwright');
+  const browser=await chromium.launch({headless:true,...(process.env.BROWSER_CHANNEL?{channel:process.env.BROWSER_CHANNEL}:{})});
+  try {
+    const page=await browser.newPage(),origins=[];
+    page.on('request',r=>{if(r.method()==='POST')origins.push(r.headers().origin);});
+    await page.goto(config.origin+'/api/feedback-admin.php');
+    await page.locator('[name="password"]').fill('wrong-test-password');
+    await page.getByRole('button',{name:'Přihlásit se',exact:true}).click();
+    await page.getByRole('alert').filter({hasText:'Heslo nesouhlasí.'}).waitFor();
+    await page.locator('[name="password"]').fill(password);
+    await page.getByRole('button',{name:'Přihlásit se',exact:true}).click();
+    await page.getByRole('button',{name:'Odhlásit se',exact:true}).waitFor();
+    await page.getByRole('button',{name:'Odhlásit se',exact:true}).click();
+    await page.getByRole('button',{name:'Přihlásit se',exact:true}).waitFor();
+    assert.equal(origins.length,3);assert(origins.every(origin=>origin===config.origin));
+  } finally {await browser.close();}
   console.log('PASS: real feedback API, guest submission, validation, CSRF, retry deduplication, rate limit, private admin and escaped content');
 };
