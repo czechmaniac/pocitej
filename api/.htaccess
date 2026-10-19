@@ -1,0 +1,4 @@
+Options -Indexes
+<FilesMatch "^(config(\.example)?|logic)\.php$">
+ Require all denied
+</FilesMatch>

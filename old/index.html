@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#eef7fb"><meta name="description" content="Hravé procvičování sčítání a odčítání s rozkladem čísel a násobení do 100.">
+  <title>Počítáme ♡ — Malé příklady, velké pokroky</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect rx='9' width='32' height='32' fill='%23ff851b'/%3E%3Cpath d='M8 16h16M16 8v16' stroke='white' stroke-width='4'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css?v=rewards-10"><script src="script.js?v=rewards-10" defer></script>
+</head>
+<body>
+<div class="landscape" aria-hidden="true"></div>
+<div class="app">
+  <header>
+    <div class="brand">
+      <svg class="fox" viewBox="0 0 120 120" role="img" aria-label="Usměvavá liška">
+        <path d="M21 54Q6 3 21 9L47 29M76 29Q103 -4 105 14L101 61" fill="#fa8c30" stroke="#994616" stroke-width="3"/>
+        <path d="M24 42L20 19 39 33M86 34L99 17 97 46" fill="#ffd5b7"/>
+        <path d="M18 61Q20 27 59 26Q95 24 103 64L114 79Q98 106 62 109Q28 109 8 84Z" fill="#ff9639" stroke="#994616" stroke-width="2"/>
+        <path d="M10 83Q31 65 58 87Q84 64 112 80Q95 105 62 107Q29 107 10 83" fill="#fff7e8"/>
+        <ellipse cx="40" cy="63" rx="8" ry="12" fill="#fff"/><ellipse cx="81" cy="61" rx="8" ry="12" fill="#fff"/>
+        <ellipse cx="42" cy="65" rx="5" ry="8" fill="#263745"/><ellipse cx="79" cy="63" rx="5" ry="8" fill="#263745"/>
+        <circle cx="43" cy="62" r="2" fill="white"/><circle cx="80" cy="60" r="2" fill="white"/>
+        <path d="M52 83Q60 77 69 82Q65 91 60 91Q55 89 52 83" fill="#263745"/><path d="M60 91Q60 102 49 94M60 91Q63 101 72 92" fill="none" stroke="#263745" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <div><h1>Počítáme <span>♡</span></h1><p>Malé příklady, velké pokroky!</p></div>
+    </div>
+    <div class="header-right"><p class="encouragement">Ty to zvládneš! <span>♡</span></p>
+      <nav aria-label="Hlavní menu">
+        <button class="active" data-view="math"><span>＋−</span> Počítání</button>
+        <button data-view="stats"><span>▥</span> Moje pokroky</button>
+        <button data-view="rewards"><span>☆</span> Odměny</button>
+        <button data-view="settings"><span>⚙</span> Nastavení</button>
+      </nav>
+    </div>
+  </header>
+  <main>
+    <section id="math-view" aria-label="Počítání">
+      <section class="worksheet panel" aria-labelledby="exercise-title">
+        <div class="worksheet-heading"><div class="title-group"><span id="series-badge">1</span><h2 id="exercise-title">Spočítej a zapiš rozklad.</h2></div><p class="tip"><span aria-hidden="true">☀</span><span id="tip-text"></span></p></div>
+        <form id="exercise-form" novalidate><div id="exercise-grid"></div></form>
+        <div id="exercise-pages" class="exercise-pages" aria-label="Stránky příkladů"><button id="page-back" type="button" aria-label="Předchozí příklady">←</button><span id="page-label" aria-live="polite"></span><button id="page-forward" type="button" aria-label="Další příklady">→</button></div>
+        <p id="feedback" role="status" aria-live="polite"></p>
+      </section>
+      <div class="bottom-bar"><button id="new-set" class="new-button"><span>⟳</span> Nové příklady</button><div id="series-progress" aria-label="Průběh cvičení"></div><button id="check" class="primary" type="submit" form="exercise-form"><span>✓</span> Zkontrolovat</button><button id="next" class="primary" hidden>Další série →</button></div>
+      <p class="footer-note">Každý malý krok se počítá. <span>♡</span></p>
+    </section>
+    <section id="settings-view" class="panel secondary" hidden tabindex="-1" aria-labelledby="settings-title">
+      <h2 id="settings-title">Nastavení</h2>
+      <div class="profile-choice"><span>Jsem:</span><div class="button-group" role="group" aria-label="Výběr kluk nebo holka"><button data-gender="boy">Kluk</button><button data-gender="girl">Holka</button></div></div>
+      <p>Výběr určuje názvy odměn. Nejvyšší titul je Dino král nebo Kari královna. Získané odměny zůstávají zachované i při změně výběru.</p>
+      <p>Vyber, co chceš procvičovat. Změna operace, rozsahu nebo počtu příkladů zahájí nové cvičení o šesti sériích.</p>
+      <div class="controls panel">
+        <div class="button-group operations" aria-label="Operace"><button data-operation="addition">＋ <span>Sčítání</span></button><button data-operation="subtraction">− <span>Odčítání</span></button><button data-operation="multiplication">× <span>Násobení</span></button></div>
+        <div class="control-group"><span>Rozsah čísel:</span><div id="range-options" class="button-group"><button data-range="10">do 10</button><button data-range="20">do 20</button></div><div id="multiplication-range" class="button-group" aria-label="Nejvyšší výsledek násobení" hidden><button data-multiplication-limit="20">do 20</button><button data-multiplication-limit="50">do 50</button><button data-multiplication-limit="100">do 100</button></div></div>
+        <div class="control-group"><span>Počet příkladů:</span><div class="button-group"><button data-count="6">6</button><button data-count="9">9</button><button data-count="12">12</button></div></div>
+      </div>
+      <label class="settings-row"><input id="large-text" type="checkbox">Větší čísla v příkladech</label>
+      <p>Do 20 procvičujeme přechod přes desítku. Do 10 se učíme rozkládat číslo na dvě kladné části.</p>
+      <p>U násobení vyber nejvyšší výsledek: 20, 50 nebo 100. Procvičujeme malou násobilku s čísly od 1 do 10. Vyplňuje se pouze výsledek.</p>
+      <p>Všechna nastavení i pokroky se automaticky ukládají v tomto prohlížeči a zůstanou zachované po obnovení stránky.</p>
+      <button id="settings-back" class="back-button">← Zpět na počítání</button>
+    </section>
+    <section id="secondary-view" class="panel secondary" hidden tabindex="-1"></section>
+  </main>
+  <p id="storage-note" role="status" hidden>Prohlížeč nepovolil ukládání. Počítání funguje, pokroky se ale po zavření neuchovají.</p>
+</div>
+</body>
+</html>
