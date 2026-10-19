@@ -100,7 +100,7 @@ async function newServerSet(resetSeries) {
   acceptProfile(result.user);
   serverSetId=result.setId;
   if(resetSeries) state.series=1;
-  state.exercises=result.exercises.map(e=>e.operation==='multiplication'?{...e,result:e.a*e.b}:calculateCorrectDecomposition(e.a,e.b,e.operation,state.range));
+  state.exercises=result.exercises.map(e=>ExerciseRules.decorate(e));
   state.completed=false;state.page=0;
   $('#feedback').textContent='';$('#check').hidden=false;$('#next').hidden=true;
   renderExercises();showProgress();syncControls();scheduleLayout();
@@ -118,7 +118,7 @@ async function checkOnServer(advance) {
   const end=advance?Math.min(first+state.pageSize,state.count):state.count;
   const answers=[];
   for(let index=first;index<end;index++) {
-    answers.push({index,values:Array.from(document.querySelectorAll(`[data-exercise="${index}"]`)).map(input=>/^\d+$/.test(input.value)?Number(input.value):null)});
+    answers.push({index,values:answerValues(index)});
   }
   const result=await api('check',{setId:serverSetId,answers});
   acceptProfile(result.user);
@@ -126,17 +126,18 @@ async function checkOnServer(advance) {
   for(const item of result.checks) {
     const inputs=Array.from(document.querySelectorAll(`[data-exercise="${item.index}"]`));
     inputs.forEach((input,i)=>{
-      input.classList.toggle('correct',item.checks[i]);input.classList.toggle('incorrect',!item.checks[i]);
-      input.setAttribute('aria-invalid',String(!item.checks[i]));
-      if(!item.checks[i]&&!wrong) wrong=input;
+      const valid=item.checks[state.exercises[item.index].type==='direct'?0:i];
+      input.classList.toggle('correct',valid);input.classList.toggle('incorrect',!valid);
+      input.setAttribute('aria-invalid',String(!valid));
+      if(!valid&&!wrong) wrong=input;
     });
     const ok=item.checks.every(Boolean);
     const card=inputs[0].closest('.exercise');card.classList.toggle('solved',ok);
-    const blank=inputs.some(input=>input.value==='');
+    const blank=answerValues(item.index).length===0||answerValues(item.index).includes(null);
     card.querySelector('.exercise-status').textContent=ok?'✓ Výborně!':blank?'Doplň označená políčka.':'Ještě přepočítej označená políčka.';
     const question=card.querySelector('.question');
-    if(question) question.textContent=item.checks[2]?state.exercises[item.index].result:'?';
-    if(ok) inputs.forEach(input=>{input.readOnly=true;});
+    if(question) question.textContent=item.checks.at(-1)?state.exercises[item.index].result:'?';
+    if(ok) inputs.forEach(input=>{if(input.type==='radio') input.disabled=true; else input.readOnly=true;});
   }
   if(wrong) {
     $('#feedback').textContent='Ještě oprav označená políčka. Potom můžeš pokračovat.';
@@ -257,3 +258,27 @@ document.addEventListener('visibilitychange',()=>{
   });
 });
 boot();
+
+// Battles use the same server-issued exercises and first-attempt accounting.
+window.PracticeSession = {
+  identity() { return guestMode?'guest':account?.id; },
+  async next(p) {
+    if(guestMode) return null;
+    if(!account) throw new Error('Pro uložení pokroků se přihlas.');
+    const owner=account.id;
+    const result=await api('start',{settings:{...p,count:6},mode:'battle'});
+    if(guestMode||account?.id!==owner) throw new Error('Účet se změnil. Začni novou výzvu.');
+    return {exercise:ExerciseRules.decorate(result.exercises[0]),setId:result.setId,owner};
+  },
+  async check(session,e,values) {
+    if(!session) {
+      const checks=ExerciseRules.checks(e,values);
+      if(!e.checked) { e.checked=true;statistics.solved++;if(checks.every(Boolean)){statistics.correct++;statistics.streak++;statistics.bestStreak=Math.max(statistics.bestStreak,statistics.streak);}else statistics.streak=0;saveStatistics(); }
+      return checks;
+    }
+    if(guestMode||!account||account.id!==session.owner) throw new Error('Účet se změnil. Začni novou výzvu.');
+    const result=await api('check',{setId:session.setId,answers:[{index:0,values}]});
+    if(guestMode||account?.id!==session.owner) throw new Error('Účet se změnil. Začni novou výzvu.');
+    acceptProfile(result.user);return result.checks[0].checks;
+  }
+};

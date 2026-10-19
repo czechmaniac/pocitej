@@ -78,11 +78,11 @@ try {
         respond(['ok'=>true]);
     }
     if($action==='start') {
-        $s=settings($input['settings']??[]);$pool=exercisePool($s);
+        $s=settings($input['settings']??[]);$s['answerVersion']=2;$s['mode']=($input['mode']??'')==='battle'?'battle':'practice';$pool=exercisePool($s);
         for($i=count($pool)-1;$i>0;$i--) { $j=random_int(0,$i);[$pool[$i],$pool[$j]]=[$pool[$j],$pool[$i]]; }
-        $items=array_slice($pool,0,$s['count']);$id=bin2hex(random_bytes(16));
+        $items=array_slice($pool,0,$s['mode']==='battle'?1:$s['count']);$id=bin2hex(random_bytes(16));
         query('INSERT INTO pc_sets (id,user_id,week_start,settings,exercises,created_at) VALUES (?,?,?,?,?,UTC_TIMESTAMP())',[$id,$user['id'],weekStart(),json_encode($s),json_encode($items)]);
-        respond(['setId'=>$id,'exercises'=>array_map(static fn($e)=>['operation'=>$e['operation'],'a'=>$e['a'],'b'=>$e['b']],$items),'user'=>profile($user)]);
+        respond(['setId'=>$id,'exercises'=>array_map(static fn($e)=>array_intersect_key($e,array_flip(['operation','a','b','type','choices'])),$items),'user'=>profile($user)]);
     }
     if($action==='check') {
         $id=$input['setId']??'';$answers=$input['answers']??null;
@@ -95,9 +95,10 @@ try {
         if($set['week_start']!==weekStart()) { $db->rollBack();fail('Začal nový týden. Použij Nové příklady a začni nové kolo.',409); }
         $items=json_decode($set['exercises'],true);$s=json_decode($set['settings'],true);
         $indices=[];
+        if(($s['answerVersion']??0)!==2) { $db->rollBack();fail('Pravidla příkladů se změnila. Načti Nové příklady.',409); }
         foreach($answers as $answer) {
             $index=$answer['index']??null;$values=$answer['values']??null;
-            if(!is_int($index)||!isset($items[$index])||isset($indices[$index])||!is_array($values)||count($values)!==($s['operation']==='multiplication'?1:3)) { $db->rollBack();fail('Neplatné odpovědi.'); }
+            if(!is_int($index)||!isset($items[$index])||isset($indices[$index])||!is_array($values)||count($values)!==(needsDecomposition($items[$index])?3:1)) { $db->rollBack();fail('Neplatné odpovědi.'); }
             $indices[$index]=$values;
         }
         ksort($indices);
@@ -107,15 +108,10 @@ try {
         foreach($indices as $index=>$values) {
             $correct=answerChecks($items[$index],$values,$s);$ok=!in_array(false,$correct,true);
             $checks[]=['index'=>$index,'checks'=>$correct];
-            if(!$items[$index]['checked']) {
-                $items[$index]['checked']=true;$w['solved']++;
-                if($ok) { $w['correct']++;$w['streak']++;$w['best_streak']=max($w['streak'],$w['best_streak']); } else $w['streak']=0;
-            }
-            // Již uznaný příklad ani hotovou sadu opakování požadavku nezapočítá.
-            if($ok) $items[$index]['solved']=true;
+            recordAnswer($items[$index],$w,$ok);
         }
         $complete=!in_array(false,array_column($items,'solved'),true);
-        if($complete && !(int)$set['completed']) { $w['completed_sets']++;query('UPDATE pc_users SET lifetime_sets=lifetime_sets+1 WHERE id=?',[$user['id']]); }
+        if($s['mode']!=='battle' && $complete && !(int)$set['completed']) { $w['completed_sets']++;query('UPDATE pc_users SET lifetime_sets=lifetime_sets+1 WHERE id=?',[$user['id']]); }
         query('UPDATE pc_sets SET exercises=?,completed=? WHERE id=?',[json_encode($items),(int)$complete,$id]);
         query('UPDATE pc_weeks SET solved=?,correct=?,completed_sets=?,streak=?,best_streak=?,last_used=? WHERE user_id=? AND week_start=?',[$w['solved'],$w['correct'],$w['completed_sets'],$w['streak'],$w['best_streak'],date('Y-m-d'),$user['id'],weekStart()]);
         $user=query('SELECT * FROM pc_users WHERE id=?',[$user['id']])->fetch();$data=profile($user);$db->commit();

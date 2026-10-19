@@ -15,30 +15,41 @@ function weekStart(?DateTimeImmutable $now = null): string {
     $now = ($now ?? new DateTimeImmutable('now', new DateTimeZone('Europe/Prague')))->setTimezone(new DateTimeZone('Europe/Prague'));
     return $now->modify('-'.((int)$now->format('N')-1).' days')->format('Y-m-d');
 }
+function needsDecomposition(array $e): bool {
+    return $e['operation']==='subtraction' && $e['a']>10 && $e['a']-$e['b']<10;
+}
+function exerciseResult(array $e): int {
+    return $e['operation']==='addition' ? $e['a']+$e['b'] : ($e['operation']==='multiplication' ? $e['a']*$e['b'] : $e['a']-$e['b']);
+}
 function exercisePool(array $s): array {
-    $pool = [];
-    $op = $s['operation'];
-    for ($a=1; $a<=($op==='multiplication'?10:$s['range']); $a++) {
-        for ($b=($op==='multiplication'?1:2); $b<=($op==='multiplication'?10:$s['range']); $b++) {
-            $result = $op==='multiplication' ? $a*$b : ($op==='addition' ? $a+$b : $a-$b);
-            if ($result<0 || $result>($op==='multiplication'?$s['multiplicationLimit']:$s['range'])) continue;
-            if ($op!=='multiplication' && $s['range']===20 && !($op==='addition' ? $a>=5&&$a<=9&&$b<=10&&$result>10 : $a>10&&$a<=19&&$b<=10&&$result<10)) continue;
-            $pool[]=['operation'=>$op,'a'=>$a,'b'=>$b,'checked'=>false,'solved'=>false];
+    $pool=[];$op=$s['operation'];$multi=$op==='multiplication';
+    for($a=1;$a<=($multi?10:$s['range']);$a++) for($b=1;$b<=($multi?10:$s['range']);$b++) {
+        $e=['operation'=>$op,'a'=>$a,'b'=>$b,'checked'=>false,'solved'=>false];$result=exerciseResult($e);
+        if($result<0||$result>($multi?$s['multiplicationLimit']:$s['range'])) continue;
+        $e['type']=needsDecomposition($e)?'decomposition':'direct';
+        if($e['type']==='direct') {
+            $wrong=[];
+            for($d=1;count($wrong)<2;$d++) foreach([$result-$d,$result+$d] as $n) if($n>=0&&count($wrong)<2) $wrong[]=$n;
+            $e['choices']=[$result,...$wrong];shuffle($e['choices']);
         }
+        $pool[]=$e;
     }
     return $pool;
 }
 function answerChecks(array $e, array $v, array $s): array {
-    $v=array_map(static fn($n)=>is_int($n)&&$n>=0&&$n<=999?$n:null,$v);
-    $a=$e['a']; $b=$e['b']; $op=$e['operation'];
-    if ($op==='multiplication') return [($v[0]??null)===$a*$b];
-    $first=$v[0]??null; $second=$v[1]??null; $result=$v[2]??null;
-    if ($s['range']===10) {
-        $split=$first!==null&&$second!==null&&$first>0&&$second>0&&$first+$second===$b;
-        return [$split,$split,$result===($op==='addition'?$a+$b:$a-$b)];
+    $v=array_values(array_map(static fn($n)=>is_int($n)&&$n>=0&&$n<=999?$n:null,$v));
+    if(!needsDecomposition($e)) return [($v[0]??null)===exerciseResult($e)];
+    $part=$e['a']-10;
+    return [($v[0]??null)===$part,($v[1]??null)===$e['b']-$part,($v[2]??null)===exerciseResult($e)];
+}
+// First checks count once, even when a request is retried or an answer is repaired.
+function recordAnswer(array &$e, array &$w, bool $ok): void {
+    if(!$e['checked']) {
+        $e['checked']=true;$w['solved']++;
+        if($ok) { $w['correct']++;$w['streak']++;$w['best_streak']=max($w['streak'],$w['best_streak']); }
+        else $w['streak']=0;
     }
-    $part=$op==='addition'?10-$a:$a-10;
-    return [$first===$part,$second===$b-$part,$result===($op==='addition'?$a+$b:$a-$b)];
+    if($ok) $e['solved']=true;
 }
 function rewardTitle(int $sets, string $gender): string {
     $girl=$gender==='girl';

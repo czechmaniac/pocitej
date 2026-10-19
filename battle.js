@@ -149,21 +149,11 @@
  let totals = defaults(), storageFailed = false;
  try { const saved=JSON.parse(localStorage.getItem(KEY)); for(const key of Object.keys(totals)) if(Number.isSafeInteger(saved?.[key]) && saved[key]>=0) totals[key]=saved[key]; } catch { storageFailed=true; }
  const settings = () => window.AppSettings.getPreferences();
- const signature = p => JSON.stringify([p.operation,p.range,p.multiplicationLimit]);
+ const signature = p => JSON.stringify([p.operation,p.range,p.multiplicationLimit,window.PracticeSession?.identity()]);
  const shuffle = values => { for(let i=values.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[values[i],values[j]]=[values[j],values[i]];}return values; };
- function choicesFor(e){const step=e.operation==='multiplication'?e.a:1;const candidates=e.operation==='multiplication'?[e.result-step,e.result+step,e.result-e.b,e.result+e.b]:[e.result-1,e.result+1];for(let d=1;d<=3;d++)candidates.push(e.result-d,e.result+d);const wrong=[...new Set(candidates)].filter(n=>Number.isInteger(n)&&n>=0&&n!==e.result).slice(0,2);return shuffle([e.result,...wrong]);}
- function generate(p=settings()){
-  const pool=[];
-  if(p.operation==='subtraction'&&p.range===20){
-   for(let a=11;a<=18;a++)for(let b=2;b<=9;b++)if(b>a-10)pool.push({type:'decomposition',operation:'subtraction',a,b,decomposition1:a-10,decomposition2:b-(a-10),result:a-b});
-  }else if(p.operation==='multiplication'){
-   for(let a=1;a<=10;a++)for(let b=1;b<=10;b++)if(a*b<=p.multiplicationLimit)pool.push({type:'direct',operation:p.operation,a,b,result:a*b});
-  }else{
-   for(let a=1;a<=p.range;a++)for(let b=1;b<=p.range;b++){const result=p.operation==='addition'?a+b:a-b;if(result>=0&&result<=p.range)pool.push({type:'direct',operation:p.operation,a,b,result});}
-  }
-  const e={...pool[Math.floor(Math.random()*pool.length)],hadMistake:false,rejected:[]};if(e.type==='direct')e.choices=choicesFor(e);return e;
- }
- const validate=(e,values)=>[e.decomposition1,e.decomposition2,e.result].map((n,i)=>/^\d+$/.test(String(values[i])) && Number(values[i])===n);
+ function choicesFor(e){return ExerciseRules.decorate(e).choices;}
+ function generate(p=settings()) { const pool=ExerciseRules.pool(p);return {...pool[Math.floor(Math.random()*pool.length)],hadMistake:false,rejected:[]}; }
+ const validate=(e,values)=>ExerciseRules.checks(e,values.map(v=>/^\d+$/.test(String(v))?Number(v):null));
  const speed=ms=>ms<=4000?[25,5]:ms<=7000?[20,3]:ms<=12000?[16,1]:[12,0];
  const multiplier=combo=>1+Math.min(Math.max(combo-1,0),3)/10;
  let game=null, shown=false, lastTick=null, interval=null, unlockAt=0, pendingNext=false, preferenceSignature="";
@@ -174,7 +164,7 @@
  <div class="battle-versus" aria-hidden="true">⚔</div><div id="b-monster" class="character-stage monster enemy-character" data-state="normal"><div class="character-image enemy-artwork"><img id="battle-enemy-image" hidden alt="Příšera" draggable="false"><img id="battle-enemy-previous" alt="" aria-hidden="true" hidden draggable="false"></div><div class="character-effects enemy-effects" aria-hidden="true"></div></div></div>
  <form id="b-form" class="battle-math" novalidate><div class="battle-question-head"><h2 id="b-question"></h2><button type="button" id="b-keyboard-close">↓ Skrýt klávesnici</button></div><p id="b-hint"></p><div id="b-choices" class="battle-choices" role="group" aria-label="Vyber výsledek"></div><div id="b-decomposition"><div class="battle-split"><span id="b-split-number"></span><svg viewBox="0 0 100 18" aria-hidden="true"><path d="M50 1 L15 17 M50 1 L85 17"/></svg></div><div class="battle-inputs"><span id="b-first-number"></span><span>−</span><label><span>První část</span><input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" aria-label="První část rozkladu"></label><span>−</span><label><span>Druhá část</span><input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" aria-label="Druhá část rozkladu"></label><span>=</span><label><span>Výsledek</span><input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" aria-label="Výsledek příkladu"></label></div></div><p id="b-message" role="status" aria-live="polite"></p></form>
  <div class="battle-actions"><button id="b-attack" type="submit" form="b-form">⚔ ZAÚTOČIT</button><button id="b-potion" type="button"></button><button id="b-shield" type="button"></button><button id="b-special" type="button"></button></div>
- <section id="b-outcome" class="battle-outcome" hidden tabindex="-1" aria-labelledby="b-outcome-title"><h2 id="b-outcome-title"></h2><dl id="b-summary"></dl><button id="b-restart" type="button"></button></section><p class="battle-local" id="b-local">Výzvy se ukládají pouze v tomto prohlížeči, odděleně od Počítání a žebříčku.</p>`;
+ <section id="b-outcome" class="battle-outcome" hidden tabindex="-1" aria-labelledby="b-outcome-title"><h2 id="b-outcome-title"></h2><dl id="b-summary"></dl><button id="b-restart" type="button"></button></section><p class="battle-local" id="b-local">Příklady se započítávají do pokroků a přihlášeným do žebříčku. Mince a herní odměny zůstávají v tomto prohlížeči.</p>`;
  const inputs=Array.from(root.querySelectorAll('input'));
  const text=(id,value)=>{q(id).textContent=value;};
  const time=ms=>`${Math.floor(ms/60000)}:${String(Math.floor(ms/1000)%60).padStart(2,'0')}`;
@@ -190,13 +180,18 @@
  
  const disabled=!game.active||b.processingAnswer;
  q('#b-attack').disabled=disabled;
- root.querySelectorAll('.battle-choice').forEach(button=>{button.disabled=disabled||game.currentExercise.rejected.includes(Number(button.value));});inputs.forEach(i=>i.disabled=!game.active);
+ root.querySelectorAll('.battle-choice').forEach(button=>{button.disabled=disabled||game.currentExercise?.rejected.includes(Number(button.value));});inputs.forEach(i=>i.disabled=disabled);
  text('#b-potion',`🧪 LEKTVAR ×${p.potions}`);q('#b-potion').disabled=disabled||p.hp===100||p.potions===0;
  text('#b-shield',p.shieldActive?'🛡 ŠTÍT AKTIVNÍ':`🛡 ŠTÍT ×${p.shields}`);q('#b-shield').disabled=disabled||p.shieldActive||p.shields===0;
  text('#b-special',`⚡ SPECIÁL ${p.specialCharge} %`);q('#b-special').disabled=disabled||p.specialCharge<100;
  }
- function question(){
-  const prefs=settings();preferenceSignature=signature(prefs);game.currentExercise=generate(prefs);game.battle.processingAnswer=false;pendingNext=false;
+ let questionRevision=0;
+ async function question(){
+  unlockAt=0;
+  const prefs=settings();preferenceSignature=signature(prefs);const revision=++questionRevision, currentGame=game;game.battle.processingAnswer=true;pendingNext=false;render();
+  try { const session=await window.PracticeSession.next(prefs);if(revision!==questionRevision||game!==currentGame)return;
+   game.currentExercise={...(session?session.exercise:generate(prefs)),session,hadMistake:false,rejected:[]};game.battle.processingAnswer=false;
+  } catch(error) { if(game!==currentGame||revision!==questionRevision)return;message(error.message+' Použij novou výzvu.');game.active=false;q('#b-outcome').hidden=false;text('#b-outcome-title','Připojení se nezdařilo');text('#b-restart','ZKUSIT ZNOVU');render();return; }
   const e=game.currentExercise,direct=e.type==='direct',op=e.operation==='addition'?'+':e.operation==='multiplication'?'×':'−';
   root.classList.toggle('battle-direct',direct);root.classList.toggle('battle-large-text',Boolean(prefs.largeText));
   q('#b-decomposition').hidden=direct;q('#b-choices').hidden=!direct;q('#b-attack').hidden=direct;q('#b-hint').hidden=direct;
@@ -208,13 +203,17 @@
  }
  function start(){stopClock();clearEffects();game={active:true,player:{hp:100,maxHp:100,level:1,potions:2,shields:2,shieldActive:false,specialCharge:0},enemy:{id:DEFAULT_MONSTER,name:getMonsterDefinition(DEFAULT_MONSTER).displayName,hp:300,maxHp:300,level:1,damage:10,regeneration:2},battle:{combo:0,bestCombo:0,sessionPoints:0,mistakes:0,solved:0,firstTryCorrect:0,questionStartedAt:0,battleStartedAt:performance.now(),elapsed:0,lastCorrect:0,nextRegen:9000,processingAnswer:false,rewardsCommitted:false},currentExercise:null};unlockAt=0;updateCharacterVisuals(true);q('#b-outcome').hidden=true;q('#b-form').hidden=false;root.querySelector('.battle-actions').hidden=false;question();render();resumeClock();log('state transition','start');}
  function finish(won){if(!game.active||game.battle.rewardsCommitted)return;game.active=false;stopClock();clearEffects();pendingNext=false;const b=game.battle;b.rewardsCommitted=true;const coins=won?Math.floor(b.sessionPoints/10):0;totals.coins+=coins;totals.totalBattlePoints+=b.sessionPoints;totals[won?'battlesWon':'battlesLost']++;totals.bestCombo=Math.max(totals.bestCombo,b.bestCombo);save();document.activeElement?.blur();q('#b-form').hidden=true;root.querySelector('.battle-actions').hidden=true;q('#b-outcome').hidden=false;text('#b-outcome-title',won?getMonsterDefinition(game.enemy.id).displayName.toLocaleUpperCase('cs')+' PORAŽEN!':'Výzva tentokrát nevyšla.');q('#b-summary').innerHTML=[['Čas bitvy',time(b.elapsed)],['Vyřešené příklady',b.solved],['Správně napoprvé',b.firstTryCorrect],['Chyby',b.mistakes],['Nejvyšší combo',b.bestCombo],['Body',b.sessionPoints],['Získané mince',coins]].map(([k,v])=>`<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');text('#b-restart',won?'DALŠÍ VÝZVA':'ZKUSIT ZNOVU');render();keyboard();q('#b-outcome').focus({preventScroll:true});log('state transition',won?'victory':'defeat');}
- function tick(){if(!game?.active||!shown||document.hidden)return;const now=performance.now();if(lastTick!==null)game.battle.elapsed+=Math.max(0,now-lastTick);lastTick=now;const b=game.battle;
- if(b.processingAnswer && b.elapsed>=unlockAt){b.processingAnswer=false;if(pendingNext)question();render();}
+ function tick(){if(!game?.active||!shown||document.hidden)return;const now=performance.now();if(game.battle.processingAnswer&&unlockAt===0){lastTick=now;return;}if(lastTick!==null)game.battle.elapsed+=Math.max(0,now-lastTick);lastTick=now;const b=game.battle;
+ if(b.processingAnswer && unlockAt>0 && b.elapsed>=unlockAt){b.processingAnswer=false;unlockAt=0;if(pendingNext)question();render();}
  if(b.elapsed>=b.nextRegen){const ticks=Math.floor((b.elapsed-b.nextRegen)/1000)+1;b.nextRegen+=ticks*1000;const hp=Math.min(300-game.enemy.hp,ticks*2);if(hp>0){game.enemy.hp+=hp;effect('#b-monster',`+${hp}`,true);message('Příšera se léčí!');log('regen',hp);}}
  render();}
  function stopClock(){if(interval!==null)clearInterval(interval);interval=null;lastTick=null;}
  function resumeClock(){if(!game?.active||!shown||document.hidden)return;lastTick=performance.now();if(interval===null)interval=setInterval(tick,100);}
- function attack(choice){if(!shown||document.hidden||!game?.active||game.battle.processingAnswer)return;tick();const b=game.battle,e=game.currentExercise,p=game.player;const direct=e.type==='direct';if(direct&&(!e.choices.includes(choice)||e.rejected.includes(choice)))return;const checks=direct?[choice===e.result]:validate(e,inputs.map(i=>i.value));b.processingAnswer=true;unlockAt=b.elapsed+500;
+ async function attack(choice){if(!shown||document.hidden||!game?.active||game.battle.processingAnswer)return;tick();const b=game.battle,e=game.currentExercise,p=game.player;const direct=e.type==='direct';if(direct&&(!e.choices.includes(choice)||e.rejected.includes(choice)))return;b.processingAnswer=true;unlockAt=0;render();let checks;
+ try { checks=await window.PracticeSession.check(e.session,e,direct?[choice]:inputs.map(i=>/^\d+$/.test(i.value)?Number(i.value):null)); }
+ catch(error){b.processingAnswer=false;message(error.message+' Zkus odpověď znovu.');render();return;}
+ if(game.currentExercise!==e||!game.active)return;
+ unlockAt=b.elapsed+500;
  if(!checks.every(Boolean)){e.hadMistake=true;b.combo=0;b.mistakes++;const damage=p.shieldActive?5:10;p.shieldActive=false;p.hp=Math.max(0,p.hp-damage);if(direct){e.rejected.push(choice);root.querySelectorAll('.battle-choice').forEach(button=>{if(Number(button.value)===choice)button.classList.add('wrong');});}else checks.forEach((ok,i)=>{inputs[i].classList.toggle('invalid',!ok);inputs[i].setAttribute('aria-invalid',String(!ok));});effect('#b-player',`−${damage}`);message(direct?'Zkus jinou možnost.':'Oprav označená políčka. První krok musí dát 10.');if(p.hp===0)finish(false);
  }else{if(direct)root.querySelectorAll('.battle-choice').forEach(button=>{if(Number(button.value)===choice)button.classList.add('right');});const elapsed=b.elapsed-b.questionStartedAt;const [base,bonus]=e.hadMistake?[12,0]:speed(elapsed);if(!e.hadMistake){b.combo++;b.firstTryCorrect++;}b.bestCombo=Math.max(b.bestCombo,b.combo);const extra=b.combo>0 && b.combo%5===0?15:0;const damage=Math.round(base*multiplier(b.combo))+extra;b.solved++;b.sessionPoints+=10+bonus+(b.combo>=3?2:0);p.specialCharge=Math.min(100,p.specialCharge+20);game.enemy.hp=Math.max(0,game.enemy.hp-damage);b.lastCorrect=b.elapsed;b.nextRegen=b.elapsed+9000;effect('#b-monster',`−${damage}`);message(extra?'COMBO ATTACK! +15 poškození':'Správně! Pokračuj dalším příkladem.');q('#b-combo').classList.remove('combo-pulse');void q('#b-combo').offsetWidth;q('#b-combo').classList.add('combo-pulse');log('elapsed / base / combo / final damage',elapsed,base,b.combo,damage);if(game.enemy.hp===0)finish(true);else pendingNext=true;}log('HP',p.hp,game.enemy.hp);render();}
  function use(kind){if(!shown||document.hidden||!game?.active||game.battle.processingAnswer)return;tick();const p=game.player;if(kind==='potion'&&p.potions>0&&p.hp<100){const healed=Math.min(30,100-p.hp);p.hp+=healed;p.potions--;effect('#b-player',`+${healed}`,true);message(`Lektvar doplnil ${healed} HP.`);}else if(kind==='shield'&&p.shields>0&&!p.shieldActive){p.shields--;p.shieldActive=true;message('Štít sníží příští zásah na polovinu.');}else if(kind==='special'&&p.specialCharge===100){p.specialCharge=0;game.enemy.hp=Math.max(0,game.enemy.hp-40);effect('#b-monster','−40');message('Speciální útok!');if(game.enemy.hp===0)finish(true);}render();}

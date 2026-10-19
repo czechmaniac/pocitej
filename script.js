@@ -64,59 +64,17 @@ function saveStatistics() {
   writeStorage(STORAGE_KEY, statistics);
 }
 
-// Do 20 je pořadí částí pevné: první krok musí skončit na desítce.
-// Do 10 přijímáme libovolné dvě kladné části; tento režim učí samotný rozklad.
-function calculateCorrectDecomposition(a, b, operation, range = 20) {
-  const first = range === 10 ? 1 : operation === 'addition' ? 10 - a : a - 10;
-  return { operation, a, b, decomposition1: first, decomposition2: b - first, result: operation === 'addition' ? a + b : a - b };
-}
-function generateExercises() {
-  const pool = [];
-  if (state.operation === 'multiplication') {
-    // Malá násobilka: oba činitelé od 1 do 10, součin nejvýše 100.
-    for (let a = 1; a <= 10; a++) {
-      for (let b = 1; b <= 10; b++) {
-        if (a * b <= state.multiplicationLimit) pool.push({ operation: 'multiplication', a, b, result: a * b });
-      }
-    }
-  } else {
-  for (let a = 1; a <= state.range; a++) {
-    for (let b = 2; b <= state.range; b++) {
-      const addition = state.operation === 'addition';
-      const result = addition ? a + b : a - b;
-      if (result < 0 || result > state.range) continue;
-      if (state.range === 20 && !(addition ? a >= 5 && a <= 9 && b <= 10 && result > 10 : a > 10 && a <= 19 && b <= 10 && result < 10)) continue;
-      pool.push(calculateCorrectDecomposition(a, b, state.operation, state.range));
-    }
-  }
-  }
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
-  }
-  return pool.slice(0, state.count);
-}
+function generateExercises() { return ExerciseRules.shuffle(ExerciseRules.pool(state)).slice(0,state.count); }
+function answerInputs(index) { return Array.from(document.querySelectorAll('[data-exercise="'+index+'"]')).filter(input=>input.type!=='radio'||input.checked); }
+function answerValues(index) { const values=answerInputs(index).map(input=>/^\d+$/.test(input.value)?Number(input.value):null); return values.length?values:[null]; }
 function renderExercises() {
-  const multiplication = state.operation === 'multiplication';
-  $('#exercise-title').textContent = multiplication ? 'Vynásob a zapiš výsledek.' : 'Spočítej a zapiš rozklad.';
-  if (multiplication) {
-    $('#exercise-grid').innerHTML = state.exercises.map((exercise,index) => `
-      <article class="exercise multiplication" aria-label="Příklad ${index+1}: ${exercise.a} krát ${exercise.b}">
-        <div class="answer-row multiplication-row"><span>${exercise.a}</span><span>×</span><span class="operand">${exercise.b}</span><span>=</span>${inputMarkup(index,0,'Výsledek',3)}</div>
-        <p class="exercise-status" id="status-${index}"></p>
-      </article>`).join('');
-    $('#tip-text').textContent = `Násobení s výsledky do ${state.multiplicationLimit}. Například 3 × 4 znamená 4 + 4 + 4.`;
-    return;
-  }
-  const sign = state.operation === 'addition' ? '+' : '−';
-  $('#exercise-grid').innerHTML = state.exercises.map((exercise, index) => `
-    <article class="exercise" aria-label="Příklad ${index+1}: ${exercise.a} ${sign} ${exercise.b}">
-      <div class="equation" aria-hidden="true"><span>${exercise.a}</span><span>${sign}</span><span class="operand">${exercise.b}</span><span>=</span><span class="question">?</span></div>
-      <svg class="branches" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true"><path d="M48 0 L34 12 M48 0 L62 12"/></svg>
-      <div class="answer-row"><span>${exercise.a}</span><span>${sign}</span>${inputMarkup(index, 0, 'První část rozkladu')}<span>${sign}</span>${inputMarkup(index, 1, 'Druhá část rozkladu')}<span>=</span>${inputMarkup(index, 2, 'Výsledek')}</div>
-      <p class="exercise-status" id="status-${index}"></p>
-    </article>`).join('');
-  $('#tip-text').textContent = state.range === 10 ? 'Rozlož druhé číslo na dvě kladné části. Pak postupně počítej.' : state.operation === 'addition' ? 'Rozlož druhé číslo tak, aby první součet byl 10.' : 'Rozlož druhé číslo tak, aby po prvním odečtení zbylo 10.';
+  $('#exercise-title').textContent='Spočítej a vyber výsledek. U odčítání přes desítku doplň rozklad.';
+  $('#tip-text').textContent='Rozklad vyplňuj jen při odčítání přes desítku. Prvním krokem dojdi na 10.';
+  $('#exercise-grid').innerHTML=state.exercises.map((e,index)=>{
+    const sign=e.operation==='addition'?'+':e.operation==='multiplication'?'×':'−';
+    const answers=e.type==='direct' ? '<div class="answer-choices" role="group" aria-label="Vyber výsledek">'+e.choices.map(n=>'<label class="answer-choice"><input type="radio" name="answer-'+index+'" data-exercise="'+index+'" value="'+n+'" aria-describedby="status-'+index+'"><span>'+n+'</span></label>').join('')+'</div>' : '<svg class="branches" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true"><path d="M48 0 L34 12 M48 0 L62 12"/></svg><div class="answer-row"><span>'+e.a+'</span><span>−</span>'+inputMarkup(index,0,'První část rozkladu')+'<span>−</span>'+inputMarkup(index,1,'Druhá část rozkladu')+'<span>=</span>'+inputMarkup(index,2,'Výsledek')+'</div>';
+    return '<article class="exercise" aria-label="Příklad '+(index+1)+'"><div class="equation"><span>'+e.a+'</span><span>'+sign+'</span><span class="operand">'+e.b+'</span><span>=</span><span class="question">?</span></div>'+answers+'<p class="exercise-status" id="status-'+index+'"></p></article>';
+  }).join('');
 }
 function inputMarkup(index, part, label, maxLength = 2) {
   return `<input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="${maxLength}" autocomplete="off" data-exercise="${index}" data-part="${part}" aria-label="Příklad ${index+1}: ${label}" aria-describedby="status-${index}">`;
@@ -206,33 +164,28 @@ function showExercisePage(page, focusFirst = false) {
   $('#check').innerHTML = state.page < pages - 1 ? state.pageSize === 1 ? 'Další příklad →' : 'Další příklady →' : '<span>✓</span> Zkontrolovat';
   if (focusFirst) document.querySelector(`[data-exercise="${first}"]`)?.focus({ preventScroll: true });
 }
-function validateAnswer(exercise, values, range) {
-  if (exercise.operation === 'multiplication') return [values[0] === exercise.result];
-  const [first, second, result] = values;
-  const validSplit = first !== null && second !== null && first > 0 && second > 0 && first + second === exercise.b;
-  return [range === 10 ? validSplit : first === exercise.decomposition1, range === 10 ? validSplit : second === exercise.decomposition2, result === exercise.result];
-}
+function validateAnswer(exercise,values) { return ExerciseRules.checks(exercise,values); }
 function checkExerciseAnswers(start = 0, end = state.count) {
   let correctCount = 0;
   let firstIncorrect;
   for (let index = start; index < end; index++) {
     const exercise = state.exercises[index];
     const inputs = Array.from(document.querySelectorAll(`[data-exercise="${index}"]`));
-    const values = inputs.map(input => /^\d+$/.test(input.value) ? Number(input.value) : null);
+    const values = answerValues(index);
     const checks = validateAnswer(exercise, values, state.range);
     inputs.forEach((input, part) => {
-      input.classList.toggle('correct', checks[part]);
-      input.classList.toggle('incorrect', !checks[part]);
-      input.setAttribute('aria-invalid', String(!checks[part]));
-      if (!checks[part] && !firstIncorrect) firstIncorrect = input;
+      input.classList.toggle('correct', checks[exercise.type === 'direct' ? 0 : part]);
+      input.classList.toggle('incorrect', !checks[exercise.type === 'direct' ? 0 : part]);
+      input.setAttribute('aria-invalid', String(!checks[exercise.type === 'direct' ? 0 : part]));
+      if (!checks[exercise.type === 'direct' ? 0 : part] && !firstIncorrect) firstIncorrect = input;
     });
     const correct = checks.every(Boolean);
     if (correct) correctCount++;
     const card = inputs[0].closest('.exercise');
     card.classList.toggle('solved', correct);
     const question = card.querySelector('.question');
-    if (question) question.textContent = checks[2] ? exercise.result : '?';
-    $(`#status-${index}`).textContent = correct ? '✓ Výborně!' : exercise.operation === 'multiplication' ? values.includes(null) ? 'Doplň výsledek.' : 'Ještě zkus přepočítat násobení.' : values.includes(null) ? 'Doplň všechna tři políčka.' : !checks[0] || !checks[1] ? state.range === 20 ? 'Zkus prvním krokem dojít na 10.' : 'Obě kladné části musí dát druhé číslo.' : 'Rozklad máš! Ještě přepočítej výsledek.';
+    if (question) question.textContent = checks.at(-1) ? exercise.result : '?';
+    $(`#status-${index}`).textContent = correct ? '✓ Výborně!' : exercise.type === 'direct' ? values.includes(null) ? 'Vyber výsledek.' : 'Ještě zkus přepočítat příklad.' : values.includes(null) ? 'Doplň všechna tři políčka.' : !checks[0] || !checks[1] ? 'Zkus prvním krokem dojít na 10.' : 'Rozklad máš! Ještě přepočítej výsledek.';
     // Každý příklad započítáme při jeho první kontrole, i při stránkování.
     if (!exercise.checked) {
       exercise.checked = true;
@@ -271,7 +224,7 @@ function checkAnswers() {
     $('#check').hidden = true;
     $('#next').hidden = false;
     $('#next').textContent = state.series === 6 ? 'Nové cvičení →' : 'Další série →';
-    document.querySelectorAll('.answer-row input').forEach(input => { input.readOnly = true; });
+    document.querySelectorAll('[data-exercise]').forEach(input => { if(input.type==='radio') input.disabled=true; else input.readOnly = true; });
     showProgress();
     $('#next').focus();
   } else {
@@ -401,9 +354,10 @@ $('#keyboard-exit').addEventListener('click', () => {
 });
 $('#exercise-grid').addEventListener('input',event=>{
   if (!event.target.matches('input')) return;
-  event.target.value=event.target.value.replace(/[^0-9]/g,'').slice(0,event.target.maxLength);
-  event.target.classList.remove('correct','incorrect');
-  event.target.removeAttribute('aria-invalid');
+  if (event.target.type !== 'radio') event.target.value=event.target.value.replace(/[^0-9]/g,'').slice(0,event.target.maxLength);
+  document.querySelectorAll(`[data-exercise="${event.target.dataset.exercise}"]`).forEach(input=>{
+    input.classList.remove('correct','incorrect');input.removeAttribute('aria-invalid');
+  });
   const card=event.target.closest('.exercise');
   card.classList.remove('solved');
   card.querySelector('.exercise-status').textContent='';
@@ -412,7 +366,7 @@ $('#exercise-grid').addEventListener('input',event=>{
   $('#feedback').textContent='';
 });
 $('#new-set').addEventListener('click',()=>startNewSet(state.completed && state.series===6));
-$('#next').addEventListener('click',()=>{state.series=state.series===6?1:state.series+1;startNewSet();document.querySelector('.answer-row input').focus();});
+$('#next').addEventListener('click',()=>{state.series=state.series===6?1:state.series+1;startNewSet();document.querySelector('[data-exercise]')?.focus();});
 document.body.classList.toggle('large-text',Boolean(preferences.largeText));
 saveStatistics();startNewSet();showView('math');
 
