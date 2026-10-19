@@ -86,6 +86,11 @@ const server=spawn(process.env.PHP_BINARY||'php',['-n','-S','127.0.0.1:8765','-t
   assert(minuend>10&&minuend-subtrahend<10);
   await page.locator('.battle-choice[value="'+(minuend-subtrahend)+'"]').click();await page.waitForTimeout(650);
   assert.equal(stats.solved,8);assert.equal(stats.correct,2);
+  const tracked=await page.evaluate(()=>window.dataLayer.filter(item=>item[0]==='event').map(item=>({name:item[1],params:item[2]})));
+  for(const name of ['pocitej_open','practice_start','practice_complete','settings_change','view_section','battle_start'])assert(tracked.some(e=>e.name===name),'Missing event '+name);
+  assert.equal(tracked.filter(e=>e.name==='pocitej_open').length,1);
+  assert(tracked.some(e=>e.name==='settings_change'&&e.params.setting==='operation'&&e.params.operation==='subtraction'));
+  assert(!JSON.stringify(tracked).includes('nickname'));assert(!JSON.stringify(tracked).includes('pin'));
   assert.deepEqual(errors,[]);console.log('PASS: guest and cloud worksheets, mobile paging, saved stats, battle accounting and network retry');
  } finally {if(browser)await browser.close();server.kill();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

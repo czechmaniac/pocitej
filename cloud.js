@@ -104,6 +104,7 @@ async function newServerSet(resetSeries) {
   state.completed=false;state.page=0;
   $('#feedback').textContent='';$('#check').hidden=false;$('#next').hidden=true;
   renderExercises();showProgress();syncControls();scheduleLayout();
+  window.UsageAnalytics?.activity('practice_start');
 }
 startNewSet = function(resetSeries=false) {
   if(guestMode) return localPractice.start(resetSeries);
@@ -145,6 +146,7 @@ async function checkOnServer(advance) {
     focusAfterRequest=wrong;return;
   }
   if(result.completed) {
+    window.UsageAnalytics?.activity('practice_complete');
     state.completed=true;
     $('#feedback').textContent=state.series===6?'Hotovo! Celé cvičení je za tebou! 🎉':'Skvělé! Všechno správně! 🎉';
     $('#check').hidden=true;$('#next').hidden=false;

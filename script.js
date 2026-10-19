@@ -113,6 +113,7 @@ function startNewSet(resetSeries = false) {
   $('#check').hidden = false;
   $('#next').hidden = true;
   renderExercises(); showProgress(); syncControls();
+  window.UsageAnalytics?.activity('practice_start');
   scheduleLayout();
 }
 // Měříme skutečný prostor okna, nikoli rozlišení monitoru. Odpovědi zůstávají
@@ -219,6 +220,7 @@ function checkAnswers() {
   if (correctCount === state.count) {
     state.completed = true;
     statistics.completedSets++;
+    window.UsageAnalytics?.activity('practice_complete');
     const praise = ['Skvělé! Všechno správně! 🎉', 'Paráda! To se povedlo!', 'Výborně! Jen tak dál!'];
     $('#feedback').textContent = state.series === 6 ? 'Hotovo! Celé cvičení je za tebou! 🎉' : praise[Math.floor(Math.random()*praise.length)];
     $('#check').hidden = true;
@@ -372,4 +374,4 @@ saveStatistics();startNewSet();showView('math');
 
 
 // Read-only bridge: battle always uses the current application preferences.
-window.AppSettings = { getPreferences() { return { gender: preferences.gender, operation: preferences.operation, range: preferences.range, multiplicationLimit: preferences.multiplicationLimit, largeText: preferences.largeText }; } };
+window.AppSettings = { getPreferences() { return { gender: preferences.gender, operation: preferences.operation, range: preferences.range, multiplicationLimit: preferences.multiplicationLimit, count: preferences.count, largeText: preferences.largeText }; } };
