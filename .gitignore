@@ -2,3 +2,5 @@
 .env
 .env.*
 !.env.example
+
+/api/feedback-admin.config.php
