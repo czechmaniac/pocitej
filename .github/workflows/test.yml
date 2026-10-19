@@ -1,0 +1,31 @@
+name: Exercise and statistics tests
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: local-test-only
+          MYSQL_DATABASE: pocitej_test
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -plocal-test-only"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm install --no-save playwright@1.62.1
+      - run: npx playwright install --with-deps chromium
+      - run: node tests/rules.cjs
+      - run: php -l api/index.php && php -l api/logic.php
+      - run: node tests/browser.cjs
+      - run: node tests/api.cjs
+        env:
+          TEST_DB_NAME: pocitej_test
+          TEST_DB_PASSWORD: local-test-only
