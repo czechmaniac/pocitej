@@ -2,12 +2,12 @@
 require __DIR__.'/../api/logic.php';
 function ensure(bool $condition): void { if(!$condition) throw new RuntimeException('Rule assertion failed'); }
 $all=[];
-foreach(['addition','subtraction','multiplication'] as $operation) foreach([10,20] as $range) foreach([20,50,100] as $limit) {
-    $s=settings(['operation'=>$operation,'range'=>$range,'multiplicationLimit'=>$limit]);$pool=exercisePool($s);
+foreach(['practice','battle'] as $mode) foreach(['addition','subtraction','multiplication'] as $operation) foreach([10,20] as $range) foreach([20,50,100] as $limit) {
+    $s=settings(['operation'=>$operation,'range'=>$range,'multiplicationLimit'=>$limit]);$s['mode']=$mode;$pool=exercisePool($s);
     ensure(count($pool)>=12);
     foreach($pool as $e) {
         $result=exerciseResult($e);
-        if(needsDecomposition($e)) {
+        if(requiresDecomposition($e,$s)) {
             $values=[$e['a']-10,$e['b']-($e['a']-10),$result];
             ensure($values[0]>0&&$values[1]>0);
             ensure(answerChecks($e,$values,$s)===[true,true,true]);

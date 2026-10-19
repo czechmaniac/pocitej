@@ -98,7 +98,7 @@ try {
         if(($s['answerVersion']??0)!==2) { $db->rollBack();fail('Pravidla příkladů se změnila. Načti Nové příklady.',409); }
         foreach($answers as $answer) {
             $index=$answer['index']??null;$values=$answer['values']??null;
-            if(!is_int($index)||!isset($items[$index])||isset($indices[$index])||!is_array($values)||count($values)!==(needsDecomposition($items[$index])?3:1)) { $db->rollBack();fail('Neplatné odpovědi.'); }
+            if(!is_int($index)||!isset($items[$index])||isset($indices[$index])||!is_array($values)||count($values)!==(requiresDecomposition($items[$index],$s)?3:1)) { $db->rollBack();fail('Neplatné odpovědi.'); }
             $indices[$index]=$values;
         }
         ksort($indices);

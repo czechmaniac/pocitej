@@ -18,6 +18,9 @@ function weekStart(?DateTimeImmutable $now = null): string {
 function needsDecomposition(array $e): bool {
     return $e['operation']==='subtraction' && $e['a']>10 && $e['a']-$e['b']<10;
 }
+function requiresDecomposition(array $e, array $s): bool {
+    return ($s['mode']??'practice')!=='battle' && needsDecomposition($e);
+}
 function exerciseResult(array $e): int {
     return $e['operation']==='addition' ? $e['a']+$e['b'] : ($e['operation']==='multiplication' ? $e['a']*$e['b'] : $e['a']-$e['b']);
 }
@@ -26,7 +29,7 @@ function exercisePool(array $s): array {
     for($a=1;$a<=($multi?10:$s['range']);$a++) for($b=1;$b<=($multi?10:$s['range']);$b++) {
         $e=['operation'=>$op,'a'=>$a,'b'=>$b,'checked'=>false,'solved'=>false];$result=exerciseResult($e);
         if($result<0||$result>($multi?$s['multiplicationLimit']:$s['range'])) continue;
-        $e['type']=needsDecomposition($e)?'decomposition':'direct';
+        $e['type']=requiresDecomposition($e,$s)?'decomposition':'direct';
         if($e['type']==='direct') {
             $wrong=[];
             for($d=1;count($wrong)<2;$d++) foreach([$result-$d,$result+$d] as $n) if($n>=0&&count($wrong)<2) $wrong[]=$n;
@@ -38,7 +41,7 @@ function exercisePool(array $s): array {
 }
 function answerChecks(array $e, array $v, array $s): array {
     $v=array_values(array_map(static fn($n)=>is_int($n)&&$n>=0&&$n<=999?$n:null,$v));
-    if(!needsDecomposition($e)) return [($v[0]??null)===exerciseResult($e)];
+    if(!requiresDecomposition($e,$s)) return [($v[0]??null)===exerciseResult($e)];
     $part=$e['a']-10;
     return [($v[0]??null)===$part,($v[1]??null)===$e['b']-$part,($v[2]??null)===exerciseResult($e)];
 }

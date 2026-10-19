@@ -152,7 +152,7 @@
  const signature = p => JSON.stringify([p.operation,p.range,p.multiplicationLimit,window.PracticeSession?.identity()]);
  const shuffle = values => { for(let i=values.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[values[i],values[j]]=[values[j],values[i]];}return values; };
  function choicesFor(e){return ExerciseRules.decorate(e).choices;}
- function generate(p=settings()) { const pool=ExerciseRules.pool(p);return {...pool[Math.floor(Math.random()*pool.length)],hadMistake:false,rejected:[]}; }
+ function generate(p=settings()) { const pool=ExerciseRules.pool({...p,mode:'battle'});return {...pool[Math.floor(Math.random()*pool.length)],hadMistake:false,rejected:[]}; }
  const validate=(e,values)=>ExerciseRules.checks(e,values.map(v=>/^\d+$/.test(String(v))?Number(v):null));
  const speed=ms=>ms<=4000?[25,5]:ms<=7000?[20,3]:ms<=12000?[16,1]:[12,0];
  const multiplier=combo=>1+Math.min(Math.max(combo-1,0),3)/10;
