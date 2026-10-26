@@ -12,6 +12,14 @@ Nová záložka Šachy používá stejné profily, PINy a přihlášení jako po
 - Partie je bez hodin. Zavření stránky ani výpadek nepřisoudí prohru, po přihlášení se obnoví ze serveru.
 - Aktualizace přibližně každé 2,5 sekundy ve viditelné herně. Nevyžaduje WebSocket server. Šachové partie nemění body a statistiky počítání.
 
+## Hra proti počítači a větší plocha
+
+Hra proti PC funguje i hostům. Vyber lehkou, střední nebo těžší obtížnost a bílé/černé figurky. Jedná se o jednoduchého místního soupeře s omezeným hledáním, nikoli o turnajový engine. Výpočet probíhá ve Web Workeru, takže neblokuje ovládání stránky. Rozpracovaná partie s PC se ukládá do tohoto prohlížeče zvlášť pro hosta a každý přihlášený profil. Tlačítko Pokračovat s PC ji obnoví; Nová partie s PC ji nahradí novou. Tlačítko Online herna vrátí seznam hráčů a případnou uloženou online partii.
+
+Šachovnice používá dostupnou výšku a šířku okna, boční panely se podle místa rozdělí do sloupců. Celá obrazovka otevře větší herní plochu; v prohlížeči bez nativního fullscreenu použije plochu okna. Na mobilu zůstává šachovnice přes šířku displeje a panely pod ní.
+
+Aktualizace z předchozí šachové verze **nevyžaduje změnu databáze**. Nahraj obsah aktualizačního ZIPu včetně `assets/chess/`, `chess-worker.js` a `api/logic.php`; `index.html` jako poslední. Potom klikni v počítání na Nové příklady, aby se vygenerovaly nové možnosti odpovědí.
+
 ## Nasazení na stávající hosting
 
 1. Ve správě **stávající databáze Počítáme** spusť soubor `api/chess-schema.sql`. Přidá tři tabulky `pc_chess_presence`, `pc_chess_invites` a `pc_chess_games`; stávající tabulky ani jejich obsah neupravuje. SQL lze spustit opakovaně.
@@ -29,6 +37,10 @@ Vyžaduje PHP 8.1+ s rozšířeními PDO MySQL a ctype, MySQL/MariaDB a HTTPS (s
 
 Tah obsahuje revizi partie a ID požadavku. Server kontroluje účastníky, CSRF/origin a pravidla, změny ukládá v transakci se zámky. Opakování posledního již přijatého tahu je bezpečné; zastaralé tahy se odmítnou a klient načte aktuální stav. Vyhledávání neposílá e-maily, PINy ani osobní údaje, jen přezdívky a dostupnost.
 
+Volby výsledků se nově liší i číselnou velikostí: správná odpověď může být nejmenší, prostřední i největší (pokud to dovoluje nezáporný obor). Obě chybné možnosti mohou ležet na stejné straně správného výsledku. Tlačítka se nadále náhodně promíchávají. Pravidla jsou společná pro hosta, přihlášený profil i souboje.
+
 ## Zdroje
 
 Šachová knihovna [p-chess/chess](https://github.com/p-chess/chess), licence MIT, připnutý commit `77aa3157e30842c420009fbe14059c72805b228d`. Jádro je přiloženo beze změn, včetně licence. [Pravidla FIDE](https://handbook.fide.com/chapter/E012023) jsou referencí pro tahy a ukončení partie. Tato herna používá rekreační režim bez hodin, rozhodčího a turnajových sankcí.
+
+Pro hru proti PC je přiložena [chess.js 1.4.0](https://github.com/jhlywa/chess.js) s licencí BSD-2-Clause v `assets/chess/LICENSE`. Produkce načítá všechny skripty místně; nepoužívá CDN ani externí službu počítačového hráče.

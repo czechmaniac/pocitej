@@ -16,6 +16,8 @@ module.exports=async({config,A,B})=>{
   await black.locator('[data-square="e7"]').click();await black.locator('[data-square="e5"]').click();
   await black.locator('#chess-moves').getByText('e5',{exact:true}).waitFor();await white.bringToFront();await white.locator('#chess-moves').getByText('e5',{exact:true}).waitFor();
   await white.reload();await white.locator('[data-view="chess"]').click();await white.locator('#chess-moves').getByText('e5',{exact:true}).waitFor();assert.equal(await white.locator('[data-square]').count(),64);
+  await white.locator('#chess-pc-start').click();await white.locator('#chess-connection').getByText('Hra proti PC',{exact:false}).waitFor();
+  await white.locator('#chess-online').click();await white.locator('#chess-moves').getByText('e5',{exact:true}).waitFor();
   if(process.env.CHESS_SCREENSHOT)await pa.screenshot({path:process.env.CHESS_SCREENSHOT,fullPage:true});
   const overflow=await pb.evaluate(()=>document.documentElement.scrollWidth>innerWidth);assert.equal(overflow,false,'mobile board must fit width');
   await black.bringToFront();await black.locator('#chess-resign').click();await black.locator('#chess-resign-cancel').click();assert.equal(await black.locator('#chess-game-actions').isVisible(),true);

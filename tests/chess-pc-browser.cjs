@@ -1,0 +1,21 @@
+const assert=require('node:assert/strict'),{spawn}=require('node:child_process');const {chromium}=require('playwright');
+const server=spawn(process.env.PHP_BINARY||'php',['-n','-S','127.0.0.1:8774','-t',require('node:path').resolve(__dirname,'..')],{stdio:'ignore'});
+(async()=>{let browser;try{
+ browser=await chromium.launch({headless:true,...(process.env.BROWSER_CHANNEL?{channel:process.env.BROWSER_CHANNEL}:{})});const page=await browser.newPage({viewport:{width:1920,height:1080}}),errors=[];
+ page.on('pageerror',e=>errors.push(e.message));await page.route('**/googletagmanager.com/**',r=>r.abort());
+ await page.goto('http://127.0.0.1:8774');await page.locator('#guest-start').click();await page.locator('[data-view="chess"]').click();
+ await page.waitForTimeout(100);const board=await page.locator('#chess-board').boundingBox();assert(board.width>600,'desktop board should use available height instead of the former small cap');assert(board.y+board.height<1080);
+ await page.locator('#chess-pc-level').selectOption('1');await page.locator('#chess-pc-start').click();await page.locator('#chess-turn').getByText('Jsi na tahu.',{exact:false}).waitFor();
+ await page.locator('[data-square="e2"]').click();await page.locator('[data-square="e4"]').click();
+ await page.waitForFunction(()=>document.querySelectorAll('#chess-moves>div>span').length>=3&&document.querySelector('#chess-moves').textContent.indexOf('…')<0&&document.querySelector('#chess-turn').textContent.includes('Jsi na tahu'));
+ assert.equal(await page.locator('[data-chess-online]:visible').count(),0);
+ if(process.env.CHESS_PC_SCREENSHOT)await page.screenshot({path:process.env.CHESS_PC_SCREENSHOT,fullPage:true});
+ await page.reload();await page.locator('[data-view="chess"]').click();await page.locator('#chess-connection').getByText('Hra proti PC',{exact:false}).waitFor();assert((await page.locator('#chess-moves').textContent()).includes('e4'));
+ await page.locator('#chess-pc-side').selectOption('b');await page.locator('#chess-pc-level').selectOption('2');await page.locator('#chess-pc-start').click();await page.locator('#chess-turn').getByText('Jsi na tahu.',{exact:false}).waitFor();assert((await page.locator('#chess-you-detail').textContent()).includes('černé'));
+ await page.locator('[data-square="e7"]').click();await page.locator('[data-square="e5"]').click();await page.locator('#chess-turn').getByText('Jsi na tahu.',{exact:false}).waitFor();
+ await page.locator('#chess-fullscreen').click();await page.waitForFunction(()=>document.fullscreenElement?.id==='chess-view'||document.querySelector('#chess-view').classList.contains('chess-focus'));await page.locator('#chess-fullscreen').click();
+ await page.setViewportSize({width:390,height:844});await page.waitForTimeout(100);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'mobile board fits');
+ await page.locator('#chess-online').click();assert.equal(await page.locator('#chess-game-actions').isVisible(),false);
+ await page.locator('#chess-pc-resume').click();await page.locator('#chess-game-actions').waitFor();await page.locator('#chess-resign').click();await page.locator('#chess-resign-confirm').click();await page.locator('#chess-turn').getByText('Vyhrál soupeř.',{exact:false}).waitFor();
+ assert.deepEqual(errors,[]);console.log('PASS: responsive/fullscreen board, guest PC play as white and black, real worker replies, reload/resume, online switch and mobile layout');
+}finally{if(browser)await browser.close();server.kill();}})().catch(e=>{console.error(e);process.exitCode=1;});

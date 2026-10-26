@@ -9,8 +9,9 @@ const config={db_host:process.env.TEST_DB_HOST||'127.0.0.1',db_port:Number(proce
 assert(config.db_name,'TEST_DB_NAME must name an empty disposable database');
 fs.mkdirSync(path.join(temp,'api'));
 for(const n of ['index.php','logic.php','feedback.php','feedback-common.php','feedback-admin.php','chess-api.php','chess-core.php'])fs.copyFileSync(path.join(__dirname,'../api',n),path.join(temp,'api',n));
+fs.mkdirSync(path.join(temp,'assets'),{recursive:true});fs.cpSync(path.join(__dirname,'../assets/chess'),path.join(temp,'assets/chess'),{recursive:true});
 fs.cpSync(path.join(__dirname,'../api/vendor'),path.join(temp,'api/vendor'),{recursive:true});
-for(const n of ['index.html','script.js','exercises.js','cloud.js','battle.js','analytics.js','feedback.js','chess.js','style.css','battle.css','feedback.css','chess.css'])fs.copyFileSync(path.join(__dirname,'..',n),path.join(temp,n));
+for(const n of ['index.html','script.js','exercises.js','cloud.js','battle.js','analytics.js','feedback.js','chess.js','chess-worker.js','style.css','battle.css','feedback.css','chess.css'])fs.copyFileSync(path.join(__dirname,'..',n),path.join(temp,n));
 fs.writeFileSync(path.join(temp,'api/config.php'),'<?php return json_decode('+JSON.stringify(JSON.stringify(config))+',true);');
 const setup=`<?php $c=json_decode(file_get_contents($argv[1]),true);$db=new PDO('mysql:host='.$c['db_host'].';port='.$c['db_port'].';dbname='.$c['db_name'],$c['db_user'],$c['db_password']);if($db->query('SHOW TABLES')->fetch())throw new Exception('Database must be empty');$db->exec(file_get_contents($argv[2]));$db->exec(file_get_contents($argv[3]));`;
 fs.writeFileSync(path.join(temp,'setup.php'),setup);fs.writeFileSync(path.join(temp,'config.json'),JSON.stringify(config));

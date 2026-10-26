@@ -4,3 +4,19 @@
 
 @media(min-width:1001px){.chess-board-card{max-width:min(760px,max(360px,calc(100dvh - 470px)))}}
 .header-right{max-width:none}
+/* The chess room uses the viewport instead of a small height-capped card. */
+body.chess-active .app{max-width:none;padding:12px clamp(8px,1.5vw,24px)}
+body.chess-active header{margin-bottom:12px;gap:16px}body.chess-active .encouragement{display:none}
+body.chess-active .fox{width:64px;height:68px}body.chess-active h1{font-size:34px}body.chess-active .brand p{font-size:14px}
+.chess-heading{margin:0 0 10px}.chess-heading>div:first-child{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}.chess-heading .chess-eyebrow{display:none}
+#chess-view .chess-heading h2{font-size:28px}.chess-heading>div>p:last-child{margin:0;font-size:14px}
+.chess-heading-tools{display:flex;align-items:center;gap:8px}.chess-heading-tools button{min-height:38px;padding:7px 12px;font-size:13px}
+#chess-notice:empty{display:none}.chess-board-card{max-width:none!important;justify-self:stretch;padding:12px}
+.chess-player{min-height:44px}.chess-avatar{width:36px;height:36px;font-size:26px}.chess-turn{padding:8px;min-height:38px;margin:8px 0}#chess-board{margin:8px 0}
+.chess-pc-card label{display:block;font-size:13px;font-weight:600;margin:12px 0}.chess-pc-card select{display:block;width:100%;font:inherit;font-weight:400;font-size:16px;color:var(--text);padding:10px;border:1px solid #c5d5e1;border-radius:12px;background:#fff;margin-top:5px}
+.chess-pc-card button{min-height:44px;padding:9px 12px;font-size:13px;margin:4px 4px 0 0}#chess-pc-start{background:var(--orange);color:white;border-color:#ef7b16}
+#chess-view:fullscreen,#chess-view.chess-focus{box-sizing:border-box;width:100%;height:100dvh;padding:12px;background:#eef7fb;overflow:auto}
+#chess-view.chess-focus{position:fixed;inset:0;z-index:1100}
+@media(min-width:901px){.chess-layout{grid-template-columns:minmax(0,var(--chess-card-width,600px)) minmax(280px,1fr);gap:16px}.chess-sidebar{align-items:start}}
+@media(max-width:900px){.chess-layout{grid-template-columns:minmax(0,1fr)}.chess-sidebar{grid-template-columns:repeat(2,minmax(0,1fr))}.chess-board-card{width:100%}.chess-heading-tools{flex-wrap:wrap;justify-content:flex-end}}
+@media(max-width:600px){body.chess-active .fox{width:44px;height:48px}body.chess-active h1{font-size:29px}.chess-sidebar{grid-template-columns:minmax(0,1fr)}.chess-heading>div>p:last-child{display:none}.chess-heading-tools button{min-height:44px}.chess-player button,.chess-actions button{min-height:44px}.chess-heading-tools .chess-live{font-size:10px}}

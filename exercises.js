@@ -16,11 +16,17 @@ const ExerciseRules = (() => {
     const item = {...e, result, type: e.type !== 'direct' && needsDecomposition(e) ? 'decomposition' : 'direct'};
     if (item.type === 'decomposition') Object.assign(item, {decomposition1:e.a - 10, decomposition2:e.b - (e.a - 10)});
     else if (!item.choices) {
-      const wrong = [];
-      for (let d = 1; wrong.length < 2; d++) for (const n of [result - d, result + d]) if (n >= 0 && wrong.length < 2) wrong.push(n);
-      item.choices = shuffle([result, ...wrong]);
+      item.choices = answerChoices(result);
     }
     return item;
+  }
+  function answerChoices(result) {
+    if(!Number.isSafeInteger(result)||result<0)return [];
+    const spread=Math.min(20,Math.max(3,Math.ceil(result/4)));
+    const lower=shuffle(Array.from({length:Math.min(result,spread)},(_,i)=>result-i-1));
+    const upper=shuffle(Array.from({length:spread},(_,i)=>result+i+1));
+    const rank=Math.floor(Math.random()*Math.min(3,result+1));
+    return shuffle([result,...lower.slice(0,rank),...upper.slice(0,2-rank)]);
   }
   function pool(p) {
     const items = [], range = ranges.includes(p.range) ? p.range : 20;
@@ -52,6 +58,6 @@ const ExerciseRules = (() => {
   function checks(e, values) {
     return (decorate(e).type === 'decomposition' ? [e.a-10,e.b-(e.a-10),e.a-e.b] : [decorate(e).result]).map((n,i) => Number.isInteger(values[i]) && values[i] === n);
   }
-  return {ranges, sign, needsDecomposition, decorate, pool, shuffle, checks};
+  return {ranges, sign, needsDecomposition, decorate, pool, shuffle, checks, answerChoices};
 })();
 if (typeof module !== 'undefined') module.exports = ExerciseRules;
