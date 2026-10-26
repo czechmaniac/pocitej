@@ -51,6 +51,7 @@ module.exports=async({client,request,config,post,csrf,temp})=>{
   assert.equal(state.game.reason,'checkmate');assert.equal(state.game.winner,'b');
   // New online game exercised by two real browser contexts against the same PHP/MySQL server.
   await require('./chess-browser-cases.cjs')({config,A,B});
+  await require('./chess-clock-api-cases.cjs')({A,B,C,temp});
   console.log('PASS: shared chess accounts, online search, invitations, authorization/CSRF, turn enforcement, illegal/stale/retried moves, reconnect, draw, promotion and mate');
  }finally{for(const c of clients)await c.dispose();}
 };

@@ -8,7 +8,7 @@ const temp=fs.mkdtempSync(path.join(os.tmpdir(),'pocitej-api-'));
 const config={db_host:process.env.TEST_DB_HOST||'127.0.0.1',db_port:Number(process.env.TEST_DB_PORT||3306),db_name:process.env.TEST_DB_NAME,db_user:process.env.TEST_DB_USER||'root',db_password:process.env.TEST_DB_PASSWORD||'',origin:'http://127.0.0.1:8766',cookie_path:'/',secure_cookies:false};
 assert(config.db_name,'TEST_DB_NAME must name an empty disposable database');
 fs.mkdirSync(path.join(temp,'api'));
-for(const n of ['index.php','logic.php','feedback.php','feedback-common.php','feedback-admin.php','chess-api.php','chess-core.php'])fs.copyFileSync(path.join(__dirname,'../api',n),path.join(temp,'api',n));
+for(const n of ['index.php','logic.php','feedback.php','feedback-common.php','feedback-admin.php','chess-api.php','chess-core.php','chess-clock.php','chess-ranking.php'])fs.copyFileSync(path.join(__dirname,'../api',n),path.join(temp,'api',n));
 fs.mkdirSync(path.join(temp,'assets'),{recursive:true});fs.cpSync(path.join(__dirname,'../assets/chess'),path.join(temp,'assets/chess'),{recursive:true});
 fs.cpSync(path.join(__dirname,'../api/vendor'),path.join(temp,'api/vendor'),{recursive:true});
 for(const n of ['index.html','script.js','exercises.js','cloud.js','battle.js','analytics.js','feedback.js','chess.js','chess-worker.js','style.css','battle.css','feedback.css','chess.css'])fs.copyFileSync(path.join(__dirname,'..',n),path.join(temp,n));
