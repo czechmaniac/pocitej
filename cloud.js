@@ -112,11 +112,11 @@ startNewSet = function(resetSeries=false) {
   serverSetId=null;
   return run(()=>newServerSet(resetSeries));
 };
-async function checkOnServer(advance) {
+async function checkOnServer(advance, selectedIndex = null) {
   if(!serverSetId) throw new Error('Nejdřív načti sadu tlačítkem Nové příklady.');
   if(state.completed) return;
-  const first=advance?state.page*state.pageSize:0;
-  const end=advance?Math.min(first+state.pageSize,state.count):state.count;
+  const first=selectedIndex !== null ? selectedIndex : advance?state.page*state.pageSize:0;
+  const end=selectedIndex !== null ? selectedIndex + 1 : advance?Math.min(first+state.pageSize,state.count):state.count;
   const answers=[];
   for(let index=first;index<end;index++) {
     answers.push({index,values:answerValues(index)});
@@ -140,6 +140,7 @@ async function checkOnServer(advance) {
     if(question) question.textContent=item.checks.at(-1)?state.exercises[item.index].result:'?';
     if(ok) inputs.forEach(input=>{if(input.type==='radio') input.disabled=true; else input.readOnly=true;});
   }
+  if(selectedIndex !== null && !result.completed) return;
   if(wrong) {
     $('#feedback').textContent='Ještě oprav označená políčka. Potom můžeš pokračovat.';
     showExercisePage(Math.floor(Number(wrong.dataset.exercise)/state.pageSize));
@@ -158,6 +159,13 @@ async function checkOnServer(advance) {
     focusAfterRequest=document.querySelector(`[data-exercise="${state.page*state.pageSize}"]`);
   }
 }
+const localCheckSelectedAnswer = checkSelectedAnswer;
+checkSelectedAnswer = function(index) {
+  if (guestMode) return localCheckSelectedAnswer(index);
+  if (!account || state.completed) return;
+  return run(() => checkOnServer(false, index));
+};
+
 goToNextExercisePage = function() {
   if(guestMode) return localPractice.next();
   if(state.completed) { showExercisePage(state.page+1);return; }

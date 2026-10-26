@@ -21,8 +21,11 @@ const server=spawn(php,['-S','127.0.0.1:8766','-t',temp],{stdio:'ignore'});
  const post=async(action,body,expected=200)=>{const r=await client.post('/api/index.php?action='+action,{headers:{Origin:config.origin,'X-CSRF-Token':me.csrf},data:body});assert.equal(r.status(),expected,await r.text());return r.json();};
  await post('register',{nickname:'ApiTest',pin:'1234',pinAgain:'1234'});
  let solved=0,correct=0,completedSets=0;
- for(const operation of ['addition','subtraction','multiplication'])for(const range of [10,20]){
+ for(const operation of ['addition','subtraction','multiplication','division'])for(const range of [10,20,50,100,1000,0]){
+  const saved=await post('settings',{operation,range,count:12});assert(saved.ok);
+  const current=await (await client.get('/api/index.php?action=me')).json();assert.equal(current.user.preferences.range,range);assert.equal(current.user.preferences.operation,operation);
   const s=await post('start',{settings:{operation,range,count:12}});assert.equal(s.exercises.length,12);
+  for(const item of s.exercises){const e=rules.decorate(item);if(range>0)assert(Math.max(e.a,e.b,e.result)<=range);if(operation==='division')assert.equal(e.a%e.b,0);}
   const answers=s.exercises.map((item,index)=>{const e=rules.decorate(item);return {index,values:e.type==='direct'?[e.result]:[e.decomposition1,e.decomposition2,e.result]};});
   await post('check',{setId:s.setId,answers:[{index:0,values:[]}]},400);
   const first=await post('check',{setId:s.setId,answers});solved+=12;correct+=12;completedSets++;
@@ -33,6 +36,13 @@ const server=spawn(php,['-S','127.0.0.1:8766','-t',temp],{stdio:'ignore'});
  const e=rules.decorate(battle.exercises[0]),values=e.type==='direct'?[e.result]:[e.decomposition1,e.decomposition2,e.result];
  await post('check',{setId:battle.setId,answers:[{index:0,values:values.map(()=>null)}]});
  const repaired=await post('check',{setId:battle.setId,answers:[{index:0,values}]});assert(repaired.completed);assert.equal(repaired.user.statistics.solved,solved+1);assert.equal(repaired.user.statistics.correct,correct);assert.equal(repaired.user.statistics.completedSets,completedSets);
+ for(const operation of ['addition','subtraction','multiplication','division'])for(const range of [10,20,50,100,1000,0]){
+  const s=await post('start',{mode:'battle',settings:{operation,range}});assert.equal(s.exercises.length,1);
+  const e=rules.decorate(s.exercises[0]);assert.equal(e.type,'direct');assert.equal(e.choices.length,3);
+  if(range>0)assert(Math.max(e.a,e.b,e.result)<=range);
+  const result=await post('check',{setId:s.setId,answers:[{index:0,values:[e.result]}]});assert(result.completed);
+  assert.equal(result.user.statistics.completedSets,completedSets);
+ }
  await require('./feedback-api-cases.cjs')({client,request,config,temp});
  console.log('PASS: real PHP/MySQL API, all operation/range modes, malformed payload, retry idempotency, repair and battle statistics');
 }finally{if(client)await client.dispose();server.kill();fs.rmSync(temp,{recursive:true,force:true});}})().catch(e=>{console.error(e);process.exitCode=1;});

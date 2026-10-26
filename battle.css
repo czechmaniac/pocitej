@@ -99,3 +99,5 @@ body.battle-active .header-right{max-width:none}
 #battle-view #b-monster .enemy-artwork{height:calc(100% * var(--monster-scale,1))}
 #battle-view .character-stage.artwork-unavailable::after{content:'Obrázek se nepodařilo načíst';position:absolute;bottom:12px;left:8px;right:8px;text-align:center;font-size:12px;color:#d2deeb}
 #battle-view img[hidden]{display:none!important}
+
+#battle-view.battle-wide-numbers #b-question{font-size:clamp(20px,3vw,38px);overflow-wrap:anywhere}#battle-view.battle-wide-numbers .battle-choice{font-size:clamp(18px,2vw,28px);min-width:0}

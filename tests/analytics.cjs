@@ -13,6 +13,7 @@ const data=events()[1][2];assert.equal(data.operation,'subtraction');assert.equa
 for(const key of ['nickname','pin','answer','gender','id'])assert(!Object.hasOwn(data,key));
 window.UsageAnalytics.activity('private_event');assert.equal(events().length,2);
 window.UsageAnalytics.activity('battle_tool',{tool:'potion',error_kind:'RAW PRIVATE ERROR'});assert.equal(events().at(-1)[2].tool,'potion');assert(!Object.hasOwn(events().at(-1)[2],'error_kind'));
-window['ga-disable-G-1DKYKCDZ49']=true;window.UsageAnalytics.activity('practice_complete');assert.equal(events().length,3);
+preferences.operation='division';preferences.range=0;window.UsageAnalytics.activity('practice_start');assert.equal(events().at(-1)[2].operation,'division');assert.equal(events().at(-1)[2].number_range,'unlimited');
+window['ga-disable-G-1DKYKCDZ49']=true;window.UsageAnalytics.activity('practice_complete');assert.equal(events().length,4);
 window['ga-disable-G-1DKYKCDZ49']=false;window.gtag=()=>{throw Error('blocked')};assert.doesNotThrow(()=>window.UsageAnalytics.activity('battle_start'));
 assert(!JSON.stringify(calls).includes('PRIVATE'));console.log('PASS: analytics whitelist, initial event, settings, opt-out and failure isolation');

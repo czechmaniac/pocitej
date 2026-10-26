@@ -15,8 +15,8 @@ function loadPreferences() {
   return {
     largeText: saved.largeText === true,
     gender: saved.gender === 'girl' ? 'girl' : 'boy',
-    operation: ['addition','subtraction','multiplication'].includes(saved.operation) ? saved.operation : 'addition',
-    range: [10,20].includes(saved.range) ? saved.range : 20,
+    operation: ['addition','subtraction','multiplication','division'].includes(saved.operation) ? saved.operation : 'addition',
+    range: ExerciseRules.ranges.includes(saved.range) ? saved.range : 20,
     multiplicationLimit: [20,50,100].includes(saved.multiplicationLimit) ? saved.multiplicationLimit : 100,
     count: [6,9,12].includes(saved.count) ? saved.count : 6
   };
@@ -68,12 +68,14 @@ function generateExercises() { return ExerciseRules.shuffle(ExerciseRules.pool(s
 function answerInputs(index) { return Array.from(document.querySelectorAll('[data-exercise="'+index+'"]')).filter(input=>input.type!=='radio'||input.checked); }
 function answerValues(index) { const values=answerInputs(index).map(input=>/^\d+$/.test(input.value)?Number(input.value):null); return values.length?values:[null]; }
 function renderExercises() {
-  $('#exercise-title').textContent='Spočítej a vyber výsledek. U odčítání přes desítku doplň rozklad.';
-  $('#tip-text').textContent='Rozklad vyplňuj jen při odčítání přes desítku. Prvním krokem dojdi na 10.';
+  const decomposition=state.exercises.some(e=>e.type==='decomposition');
+  $('#exercise-title').textContent=decomposition ? 'Spočítej a vyber výsledek. U rozkladu dojdi nejdřív na 10.' : 'Spočítej a vyber výsledek.';
+  $('#tip-text').closest('.tip').hidden=!decomposition;
+  $('#tip-text').textContent=decomposition ? 'U příkladů s rozkladem prvním krokem dojdi na 10.' : '';
   $('#exercise-grid').innerHTML=state.exercises.map((e,index)=>{
-    const sign=e.operation==='addition'?'+':e.operation==='multiplication'?'×':'−';
+    const sign=ExerciseRules.sign(e.operation);
     const answers=e.type==='direct' ? '<div class="answer-choices" role="group" aria-label="Vyber výsledek">'+e.choices.map(n=>'<label class="answer-choice"><input type="radio" name="answer-'+index+'" data-exercise="'+index+'" value="'+n+'" aria-describedby="status-'+index+'"><span>'+n+'</span></label>').join('')+'</div>' : '<svg class="branches" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true"><path d="M48 0 L34 12 M48 0 L62 12"/></svg><div class="answer-row"><span>'+e.a+'</span><span>−</span>'+inputMarkup(index,0,'První část rozkladu')+'<span>−</span>'+inputMarkup(index,1,'Druhá část rozkladu')+'<span>=</span>'+inputMarkup(index,2,'Výsledek')+'</div>';
-    return '<article class="exercise" aria-label="Příklad '+(index+1)+'"><div class="equation"><span>'+e.a+'</span><span>'+sign+'</span><span class="operand">'+e.b+'</span><span>=</span><span class="question">?</span></div>'+answers+'<p class="exercise-status" id="status-'+index+'"></p></article>';
+    return '<article class="exercise'+(Math.max(e.a,e.b,e.result)>99?' wide-numbers':'')+'"'+(index < state.page*state.pageSize || index >= (state.page+1)*state.pageSize ? ' hidden' : '')+' aria-label="Příklad '+(index+1)+'"><div class="equation"><span>'+e.a+'</span><span>'+sign+'</span><span class="operand">'+e.b+'</span><span>=</span><span class="question">?</span></div>'+answers+'<p class="exercise-status" aria-live="polite" id="status-'+index+'"></p></article>';
   }).join('');
 }
 function inputMarkup(index, part, label, maxLength = 2) {
@@ -86,13 +88,6 @@ function showProgress() {
 function syncControls() {
   document.querySelectorAll('[data-gender]').forEach(button => {
     const active = button.dataset.gender === preferences.gender;
-    button.classList.toggle('active', active);
-    button.setAttribute('aria-pressed', String(active));
-  });
-  $('#range-options').hidden = state.operation === 'multiplication';
-  $('#multiplication-range').hidden = state.operation !== 'multiplication';
-  document.querySelectorAll('[data-multiplication-limit]').forEach(button => {
-    const active = Number(button.dataset.multiplicationLimit) === state.multiplicationLimit;
     button.classList.toggle('active', active);
     button.setAttribute('aria-pressed', String(active));
   });
@@ -162,7 +157,7 @@ function showExercisePage(page, focusFirst = false) {
   $('#page-label').textContent = state.pageSize === 1 ? `Příklad ${first + 1} z ${state.count}` : `Příklady ${first + 1}–${Math.min(first + state.pageSize,state.count)} z ${state.count}`;
   $('#page-back').disabled = state.page === 0;
   $('#page-forward').disabled = state.page === pages - 1;
-  $('#check').innerHTML = state.page < pages - 1 ? state.pageSize === 1 ? 'Další příklad →' : 'Další příklady →' : '<span>✓</span> Zkontrolovat';
+  $('#check').innerHTML = state.page < pages - 1 ? state.pageSize === 1 ? 'Další příklad →' : 'Další příklady →' : state.series === 6 ? 'Nové cvičení →' : 'Další série →';
   if (focusFirst) document.querySelector(`[data-exercise="${first}"]`)?.focus({ preventScroll: true });
 }
 function validateAnswer(exercise,values) { return ExerciseRules.checks(exercise,values); }
@@ -197,6 +192,16 @@ function checkExerciseAnswers(start = 0, end = state.count) {
   }
   return { correctCount, firstIncorrect };
 }
+function checkSelectedAnswer(index) {
+  if (state.completed) return;
+  checkExerciseAnswers(index, index + 1);
+  saveStatistics();
+}
+$('#exercise-grid').addEventListener('change', event => {
+  if (event.target.matches('input[type="radio"][data-exercise]')) {
+    checkSelectedAnswer(Number(event.target.dataset.exercise));
+  }
+});
 function goToNextExercisePage() {
   const lastPage = Math.ceil(state.count / state.pageSize) - 1;
   if (state.page >= lastPage) return;
@@ -276,13 +281,6 @@ document.querySelectorAll('[data-gender]').forEach(button => button.addEventList
   savePreferences();
   syncControls();
 }));
-document.querySelectorAll('[data-multiplication-limit]').forEach(button => button.addEventListener('click', () => {
-  const limit = Number(button.dataset.multiplicationLimit);
-  if (state.multiplicationLimit === limit) return;
-  state.multiplicationLimit = limit;
-  savePreferences();
-  startNewSet(true);
-}));
 $('#large-text').addEventListener('change', event => {
   preferences.largeText = event.target.checked;
   document.body.classList.toggle('large-text', preferences.largeText);
@@ -295,10 +293,17 @@ for (const property of ['operation','range','count']) {
     state[property]=value; savePreferences(); startNewSet(true);
   }));
 }
-$('#exercise-form').addEventListener('submit',event=>{
+async function startNextSeries() {
+  if (!state.completed) return;
+  state.series=state.series===6?1:state.series+1;
+  await startNewSet();
+  document.querySelector('[data-exercise]')?.focus({preventScroll:true});
+}
+$('#exercise-form').addEventListener('submit',async event=>{
   event.preventDefault();
-  if (state.page < Math.ceil(state.count / state.pageSize) - 1) goToNextExercisePage();
-  else checkAnswers();
+  if (state.page < Math.ceil(state.count / state.pageSize) - 1) return goToNextExercisePage();
+  await checkAnswers();
+  if (state.completed) await startNextSeries();
 });
 $('#page-back').addEventListener('click',()=>showExercisePage(state.page - 1));
 $('#page-forward').addEventListener('click',goToNextExercisePage);
@@ -343,9 +348,12 @@ $('#exercise-grid').addEventListener('focusin', () => {
   keyboardDismissed = false;
   updateKeyboardLayout();
 });
-$('#exercise-grid').addEventListener('focusout', () => {
-  scheduleLayout();
-  requestAnimationFrame(updateKeyboardLayout);
+$('#exercise-grid').addEventListener('focusout', event => {
+  // Only a text field can close the keyboard; radio checks do not change layout.
+  if (event.target.matches('.answer-row input')) {
+    scheduleLayout();
+    requestAnimationFrame(updateKeyboardLayout);
+  }
 });
 window.addEventListener('pageshow', updateKeyboardLayout);
 $('#keyboard-exit').addEventListener('click', () => {
@@ -368,7 +376,7 @@ $('#exercise-grid').addEventListener('input',event=>{
   $('#feedback').textContent='';
 });
 $('#new-set').addEventListener('click',()=>startNewSet(state.completed && state.series===6));
-$('#next').addEventListener('click',()=>{state.series=state.series===6?1:state.series+1;startNewSet();document.querySelector('[data-exercise]')?.focus();});
+$('#next').addEventListener('click',startNextSeries);
 document.body.classList.toggle('large-text',Boolean(preferences.largeText));
 saveStatistics();startNewSet();showView('math');
 
