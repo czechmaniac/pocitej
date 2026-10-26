@@ -27,6 +27,7 @@ function enterGuestMode() {
   originalShowView('math');localPractice.start(true);
 }
 function leaveGuestMode() {
+  window.ChessRoom?.show(false);
   window.BattleGame?.show(false);
   guestMode=false;writeStorage(GUEST_MODE_KEY,{enabled:false});
   document.body.classList.remove('signed-in','guest-mode','keyboard-open');
@@ -184,6 +185,16 @@ async function showLeaderboard(page=1) {
   $('#rank-math').onclick=()=>showView('math');
 }
 showView = function(view) {
+  if (view === 'chess') {
+    state.view=view;window.BattleGame?.show(false);updateKeyboardLayout();
+    for(const id of ['math-view','settings-view','secondary-view','battle-view']) $('#'+id).hidden=true;
+    document.querySelectorAll('[data-view]').forEach(button=>{
+      button.classList.toggle('active',button.dataset.view===view);
+      if(button.dataset.view===view)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');
+    });
+    window.ChessRoom?.show(true);return;
+  }
+  window.ChessRoom?.show(false);$('#chess-view').hidden=true;
   if (view !== "battle") window.BattleGame?.show(false);
   if(guestMode) {
     originalShowView(view);
@@ -240,6 +251,7 @@ $('#auth-form').addEventListener('submit',event=>{
 });
 $('#guest-start').onclick=enterGuestMode;
 $('#logout').onclick=()=>guestMode?leaveGuestMode():run(async()=>{
+  window.ChessRoom?.show(false);
   await api('logout',{});account=null;serverSetId=null;state.view='math';
   window.BattleGame?.show(false);document.body.classList.remove('signed-in');$('#auth-area').hidden=false;
   $('#pin').value='';$('#pin-again').value='';
@@ -292,3 +304,5 @@ window.PracticeSession = {
     acceptProfile(result.user);return result.checks[0].checks;
   }
 };
+
+window.ChessSession = { user() { return !account||guestMode?null:{id:account.id,nickname:account.nickname}; }, request(payload) { return api('chess',payload); }, login() { leaveGuestMode(); } };

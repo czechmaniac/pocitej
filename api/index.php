@@ -71,6 +71,7 @@ try {
         logIn($u);respond(['user'=>profile($u)]);
     }
     if(!$user) fail('Přihlas se znovu. Tvoje pokroky zůstaly uložené.',401);
+    if($action==='chess') { require __DIR__.'/chess-api.php';chessDispatch($input,$user); }
     if($action==='logout') { query('DELETE FROM pc_tokens WHERE token_hash=?',[hash('sha256',$_COOKIE['pc_login']??'')]);cookie('pc_login','',time()-3600);respond(['ok'=>true]); }
     if($action==='settings') {
         $prefs=settings($input);

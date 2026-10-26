@@ -5,11 +5,12 @@
   <meta name="theme-color" content="#eef7fb"><meta name="description" content="Hravé procvičování sčítání, odčítání, násobení a dělení. Vyber si rozsah od 10 do 1000 nebo nekonečno.">
   <title>Počítáme ♡ — Malé příklady, velké pokroky</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect rx='9' width='32' height='32' fill='%23ff851b'/%3E%3Cpath d='M8 16h16M16 8v16' stroke='white' stroke-width='4'/%3E%3C/svg%3E">
-  <script src="analytics.js?v=arithmetic-3" defer></script>
+  <script src="analytics.js?v=chess-1" defer></script>
   <link rel="stylesheet" href="feedback.css?v=1"><script src="feedback.js?v=1" defer></script>
-  <link rel="stylesheet" href="style.css?v=stable-4"><script src="exercises.js?v=arithmetic-3" defer></script><script src="script.js?v=series-5" defer></script><script src="battle.js?v=arithmetic-3" defer></script><script src="cloud.js?v=arithmetic-3" defer></script>
+  <link rel="stylesheet" href="style.css?v=stable-4"><script src="exercises.js?v=arithmetic-3" defer></script><script src="script.js?v=chess-1" defer></script><script src="battle.js?v=arithmetic-3" defer></script><script src="cloud.js?v=chess-1" defer></script>
 
   <link rel="stylesheet" href="battle.css?v=arithmetic-3">
+  <link rel="stylesheet" href="chess.css?v=chess-1"><script src="chess.js?v=chess-1" defer></script>
 </head>
 <body class="cloud-app">
 <div class="landscape" aria-hidden="true"></div>
@@ -31,6 +32,7 @@
     <div class="header-right"><p class="encouragement">Ty to zvládneš! <span>♡</span></p>
       <nav aria-label="Hlavní menu">
         <button class="active" data-view="math"><span>＋−</span> Počítání</button>
+        <button data-view="chess"><span>♞</span> Šachy</button>
         <button data-view="battle"><span>⚔</span> Výzvy</button>
         <button data-view="stats"><span>▥</span> Moje pokroky</button>
         <button data-view="rewards"><span>☆</span> Odměny</button>
@@ -77,6 +79,7 @@
       <p>Přihlášený profil ukládá nastavení a pokroky na server; týdenní body se v pondělí nulují a odměny zůstávají. Host ukládá nastavení a celkové pokroky pouze v tomto prohlížeči.</p>
       <button id="settings-back" class="back-button">← Zpět na počítání</button>
     </section>
+    <section id="chess-view" hidden aria-label="Šachová herna"></section>
     <section id="battle-view" hidden aria-label="Výzvy"></section>
     <section id="secondary-view" class="panel secondary" hidden tabindex="-1"></section>
   </main>
