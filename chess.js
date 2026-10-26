@@ -194,18 +194,16 @@
  function scheduleFit(){cancelAnimationFrame(fitFrame);fitFrame=requestAnimationFrame(fitBoard);}
  function fitBoard(){
   if(!shown)return;
-  const layout=$('.chess-layout'),card=$('.chess-board-card'),board=$('#chess-board'),sidebar=$('.chess-sidebar');
+  const layout=$('.chess-layout'),card=$('.chess-board-card'),sidebar=$('.chess-sidebar');
   sidebar.style.removeProperty('grid-template-columns');
   if(innerWidth<=900||layout.clientWidth<760){root.style.removeProperty('--chess-card-width');root.style.removeProperty('--chess-room-height');return;}
   const style=getComputedStyle(card),padding=parseFloat(style.paddingLeft)+parseFloat(style.paddingRight)+2;
-  const availableWidth=Math.max(280,layout.clientWidth-sidebar.getBoundingClientRect().width-16-padding);
-  // Measure at the available width, never at the previous (possibly wrapped) size.
-  root.style.setProperty('--chess-card-width',(availableWidth+padding)+'px');
-  const chrome=card.getBoundingClientRect().height-board.getBoundingClientRect().height;
+  const rail=parseFloat(style.getPropertyValue('--chess-player-rail')),gap=parseFloat(style.columnGap);
+  const availableWidth=Math.max(280,layout.clientWidth-sidebar.getBoundingClientRect().width-16-padding-rail-gap);
   const scrollOffset=document.fullscreenElement===root||root.classList.contains('chess-focus')?root.scrollTop:window.scrollY;
   const room=Math.max(300,(window.visualViewport?.height||innerHeight)-layout.getBoundingClientRect().top-scrollOffset-12);
-  const size=Math.floor(Math.min(availableWidth,Math.max(280,room-chrome)));
-  root.style.setProperty('--chess-card-width',(size+padding)+'px');root.style.setProperty('--chess-room-height',room+'px');
+  const size=Math.floor(Math.min(availableWidth,Math.max(280,room-parseFloat(style.paddingTop)-parseFloat(style.paddingBottom)-2)));
+  root.style.setProperty('--chess-card-width',(size+padding+rail+gap)+'px');root.style.setProperty('--chess-room-height',room+'px');
  }
  function show(visible) {
   mount();clearInterval(clockInterval);clockInterval=visible?setInterval(tickClocks,100):null;shown=visible;root.hidden=!visible;document.body.classList.toggle('chess-active',visible);clearTimeout(timer);clearTimeout(searchTimer);epoch++;
