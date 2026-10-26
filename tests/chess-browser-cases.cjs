@@ -11,13 +11,13 @@ module.exports=async({config,A,B})=>{
   await pa.waitForSelector('#chess-game-actions:visible');await pb.waitForSelector('#chess-game-actions:visible');
   const aWhite=await pa.locator('#chess-you-detail').textContent(),white=aWhite.includes('bílé')?pa:pb,black=white===pa?pb:pa;
   await white.bringToFront();await white.locator('[data-square="e2"]').click();assert.equal(await white.locator('[data-square="e4"]').getAttribute('class').then(x=>x.includes('legal')),true);
-  await white.locator('[data-square="e4"]').click();await white.locator('#chess-moves').getByText('e4',{exact:true}).waitFor();await black.bringToFront();await black.waitForSelector('#chess-turn:text("Jsi na tahu")');
-  assert((await black.locator('#chess-moves').textContent()).includes('e4'));
+  await white.locator('[data-square="e4"]').click();await white.locator('[data-square="e4"] .ivory').waitFor();await black.bringToFront();await black.waitForSelector('#chess-turn:text("Jsi na tahu")');
+  assert.equal(await black.locator('[data-square="e4"] .ivory').count(),1);
   await black.locator('[data-square="e7"]').click();await black.locator('[data-square="e5"]').click();
-  await black.locator('#chess-moves').getByText('e5',{exact:true}).waitFor();await white.bringToFront();await white.locator('#chess-moves').getByText('e5',{exact:true}).waitFor();
-  await white.reload();await white.locator('[data-view="chess"]').click();await white.locator('#chess-moves').getByText('e5',{exact:true}).waitFor();assert.equal(await white.locator('[data-square]').count(),64);
+  await black.locator('[data-square="e5"] .navy').waitFor();await white.bringToFront();await white.locator('[data-square="e5"] .navy').waitFor();
+  await white.reload();await white.locator('[data-view="chess"]').click();await white.locator('[data-square="e5"] .navy').waitFor();assert.equal(await white.locator('[data-square]').count(),64);
   await white.locator('#chess-pc-options summary').click();await white.locator('#chess-pc-start').click();await white.locator('#chess-connection').getByText('Hra proti PC',{exact:false}).waitFor();
-  await white.locator('#chess-online').click();await white.locator('#chess-moves').getByText('e5',{exact:true}).waitFor();
+  await white.locator('#chess-online').click();await white.locator('[data-square="e5"] .navy').waitFor();
   if(process.env.CHESS_SCREENSHOT)await pa.screenshot({path:process.env.CHESS_SCREENSHOT,fullPage:true});
   const overflow=await pb.evaluate(()=>document.documentElement.scrollWidth>innerWidth);assert.equal(overflow,false,'mobile board must fit width');
   await black.bringToFront();await black.locator('#chess-resign').click();await black.locator('#chess-resign-cancel').click();assert.equal(await black.locator('#chess-game-actions').isVisible(),true);

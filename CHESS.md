@@ -33,7 +33,7 @@ Body se počítají z výsledků uložených partií. Opakované načtení, opak
 - Na svém tahu lze pro současnou pozici nárokovat remízu při třech opakováních nebo 50 tazích obou stran bez pěšce či braní. Pět opakování / 75 takových tahů ukončí partii automaticky, s předností matu. Předběžný nárok s dosud neprovedeným tahem rozhraní nepodporuje.
 - PC má lehkou, střední a těžší úroveň a volbu barvy. Výpočet běží s omezeným časem ve Workeru, takže neblokuje stránku. Pokračovat s PC obnoví místní partii; Nová partie s PC ji nahradí. Online herna vrátí případnou rozehranou online partii.
 - Připojení online se obnovuje přibližně každých 2,5 sekundy ve viditelné herně. Tahy i výsledky řídí server, bez potřeby WebSocket serveru.
-- Podzimní pozadí, dvanáct plastičtějších figurek a jejich galerie vycházejí ze zvoleného grafického návrhu. Deska se přizpůsobí oknu; Celá obrazovka nabídne větší plochu. Mobil používá šířku displeje a skládá panely pod sebe.
+- Podzimní pozadí, dvanáct plastičtějších figurek vycházejí ze zvoleného grafického návrhu. Deska se přizpůsobí oknu; Celá obrazovka nabídne větší plochu. Mobil používá šířku displeje a skládá panely pod sebe.
 
 ## První instalace šachů
 
@@ -44,3 +44,9 @@ Pokud herna ještě vůbec není nainstalovaná, místo aktualizačního SQL pou
 Testy kontrolují legální pozice (perft 400/2039), speciální tahy, tři úrovně PC a obnovení. Přibyly deterministické testy hodin pro PHP i PC a skutečné PHP/MySQL testy volby času, přepínání, odmítnutí pozdního či pozměněného požadavku, časové výhry/remízy a jednorázového pořadí. Dvě oddělená přihlášení ověřují online partii a zobrazení žebříčku; mobil a fullscreen se ověřují v prohlížeči.
 
 Server používá [p-chess/chess](https://github.com/p-chess/chess), MIT, commit `77aa3157e30842c420009fbe14059c72805b228d`; PC používá [chess.js 1.4.0](https://github.com/jhlywa/chess.js), BSD-2-Clause. Licence jsou přiložené. Referencí jsou [pravidla FIDE](https://handbook.fide.com/chapter/E012023), v rekreační herně bez rozhodčího a turnajových sankcí. Obrázky jsou vytvořené pro tuto hernu, všechny soubory se načítají místně bez CDN.
+
+## Úprava dominantní hrací plochy
+
+Viditelná galerie figurek a panel Průběh partie jsou odstraněné. Deska má hlavní prostor podle výšky okna, ovládací panely jsou v jednom sloupci o šířce 300 px. Při nedostatku výšky lze posouvat jen boční ovládání. Na telefonu se panely skládají pod desku. Velikost se počítá při dostupné šířce, aby se z předchozího zalomeného stavu postupně nezmenšovala, a nezávisí na posunutí stránky.
+
+Tato změna rozložení aktualizuje pouze `chess.js`, `chess.css` a `index.html`. Nevyžaduje další SQL; předpokládá již nasazenou předchozí verzi s hodinami a žebříčkem.
