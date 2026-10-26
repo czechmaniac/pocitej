@@ -31,6 +31,20 @@ const server=spawn(process.env.PHP_BINARY||'php',['-n','-S','127.0.0.1:8765','-t
   assert.equal(await page.locator('#status-0').textContent(),'Doplň všechna tři políčka.');
   assert.equal(await page.locator('[data-exercise="0"][data-part="0"]').getAttribute('aria-invalid'),'true');
   assert((await solve()).completed);
+  // Selecting a number immediately checks only that exercise, including retries.
+  await set('addition',10);
+  const firstAttempt = await page.evaluate(()=>({...statistics}));
+  const wrongChoice = await page.evaluate(()=>state.exercises[0].choices.find(n=>n!==state.exercises[0].result));
+  await page.locator(`[data-exercise="0"][value="${wrongChoice}"]`).check();
+  assert.equal(await page.locator('#status-0').textContent(),'Ještě zkus přepočítat příklad.');
+  assert.equal(await page.locator('#status-1').textContent(),'');
+  const rightChoice = await page.evaluate(()=>state.exercises[0].result);
+  await page.locator(`[data-exercise="0"][value="${rightChoice}"]`).check();
+  assert.equal(await page.locator('#status-0').textContent(),'✓ Výborně!');
+  assert.equal(await page.locator('.exercise').first().locator('.question').textContent(),String(rightChoice));
+  assert.equal(await page.evaluate(()=>statistics.solved),firstAttempt.solved+1);
+  assert.equal(await page.evaluate(()=>statistics.correct),firstAttempt.correct);
+  await page.evaluate(()=>startNewSet(true));
   // Nothing selected must fail; a repaired first attempt must stay incorrect in stats.
   await set('addition',10);
   const before=await page.evaluate(()=>({...statistics}));
@@ -70,6 +84,16 @@ const server=spawn(process.env.PHP_BINARY||'php',['-n','-S','127.0.0.1:8765','-t
   });
   await page.reload();await page.waitForSelector('#math-view:visible');
   await page.waitForFunction(()=>serverSetId!==null&&!waiting);
+  const cloudWrong = await page.evaluate(()=>state.exercises[0].choices.find(n=>n!==state.exercises[0].result));
+  await page.locator(`[data-exercise="0"][value="${cloudWrong}"]`).check();
+  await page.waitForFunction(()=>!waiting);
+  assert.equal(await page.locator('[data-exercise="0"]:checked').getAttribute('aria-invalid'),'true');
+  assert.equal(await page.locator('#status-1').textContent(),'');
+  const cloudRight = await page.evaluate(()=>state.exercises[0].result);
+  await page.locator(`[data-exercise="0"][value="${cloudRight}"]`).check();
+  await page.waitForFunction(()=>!waiting);
+  assert.equal(await page.locator('#status-0').textContent(),'✓ Výborně!');
+  assert.equal(stats.solved,1);assert.equal(stats.correct,0);
   await page.evaluate(()=>checkAnswers());assert.equal(await page.evaluate(()=>state.completed),false);
   await page.evaluate(()=>{state.exercises.forEach((e,i)=>document.querySelector(`[data-exercise="${i}"][value="${e.result}"]`).click());});
   await page.evaluate(()=>checkAnswers());assert.equal(await page.evaluate(()=>state.completed),true);assert.equal(stats.correct,0);assert.equal(stats.solved,6);

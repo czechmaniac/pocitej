@@ -197,6 +197,16 @@ function checkExerciseAnswers(start = 0, end = state.count) {
   }
   return { correctCount, firstIncorrect };
 }
+function checkSelectedAnswer(index) {
+  if (state.completed) return;
+  checkExerciseAnswers(index, index + 1);
+  saveStatistics();
+}
+$('#exercise-grid').addEventListener('change', event => {
+  if (event.target.matches('input[type="radio"][data-exercise]')) {
+    checkSelectedAnswer(Number(event.target.dataset.exercise));
+  }
+});
 function goToNextExercisePage() {
   const lastPage = Math.ceil(state.count / state.pageSize) - 1;
   if (state.page >= lastPage) return;
