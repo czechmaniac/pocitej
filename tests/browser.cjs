@@ -15,6 +15,20 @@ const server=spawn(process.env.PHP_BINARY||'php',['-n','-S','127.0.0.1:8765','-t
   await page.locator('#guest-start').click();
   async function set(op,range){await page.locator('[data-view="settings"]').click();await page.locator(`[data-operation="${op}"]`).click();await page.locator(`[data-range="${range}"]`).click();await page.locator('#settings-back').click();}
   async function solve(){return page.evaluate(()=>{for(let i=0;i<state.exercises.length;i++){const e=state.exercises[i];if(e.type==='direct')document.querySelector(`[data-exercise="${i}"][value="${e.result}"]`).click();else [e.decomposition1,e.decomposition2,e.result].forEach((v,j)=>{document.querySelector(`[data-exercise="${i}"][data-part="${j}"]`).value=v;});}checkAnswers();return {completed:state.completed,stats:statistics};});}
+  // The final-page action advances directly, without a separate check screen.
+  await page.setViewportSize({width:1600,height:1100});
+  await page.waitForFunction(()=>state.pageSize===state.count);
+  assert.equal(await page.locator('#check').textContent(),'Další série →');
+  await page.locator('#check').click();assert.equal(await page.evaluate(()=>state.series),1);
+  const setsBefore=await page.evaluate(()=>statistics.completedSets);
+  async function selectGuestAnswers(){await page.evaluate(()=>state.exercises.forEach((e,i)=>document.querySelector(`[data-exercise="${i}"][value="${e.result}"]`).click()));}
+  await selectGuestAnswers();await page.locator('#check').click();
+  await page.waitForFunction(()=>state.series===2&&!state.completed);
+  assert.equal(await page.evaluate(()=>statistics.completedSets),setsBefore+1);
+  await page.evaluate(()=>{state.series=6;startNewSet();});await page.waitForTimeout(50);
+  assert.equal(await page.locator('#check').textContent(),'Nové cvičení →');
+  await selectGuestAnswers();await page.locator('#check').click();await page.waitForFunction(()=>state.series===1&&!state.completed);
+  assert.equal(await page.evaluate(()=>statistics.completedSets),setsBefore+2);
   for(const op of ['addition','subtraction','multiplication','division']) for(const range of [10,20,50,100,1000,0]) {
    await set(op,range);
    assert(await page.evaluate(()=>state.exercises.every(e=>e.type==='direct'?e.choices.length===3:new Set([e.decomposition1,e.decomposition2]).size>0)));
@@ -136,6 +150,12 @@ const server=spawn(process.env.PHP_BINARY||'php',['-n','-S','127.0.0.1:8765','-t
   assert.equal(tracked.filter(e=>e.name==='pocitej_open').length,1);
   assert(tracked.some(e=>e.name==='settings_change'&&e.params.setting==='operation'&&e.params.operation==='subtraction'));
   assert(!JSON.stringify(tracked).includes('nickname'));assert(!JSON.stringify(tracked).includes('pin'));
+  assert.equal(await page.locator('#next').textContent(),'Další série →');
+  await page.locator('#next').click();await page.waitForFunction(()=>!waiting&&state.series===2&&!state.completed);
+  await page.evaluate(()=>showExercisePage(Math.ceil(state.count/state.pageSize)-1));
+  assert.equal(await page.locator('#check').textContent(),'Další série →');
+  await page.locator('#check').click();await page.waitForFunction(()=>!waiting);
+  assert.equal(await page.evaluate(()=>state.series),2);assert.equal(await page.evaluate(()=>state.completed),false);
   await page.reload();await page.waitForFunction(()=>serverSetId!==null&&!waiting);
   assert.equal(await page.evaluate(()=>state.operation),'division');assert.equal(await page.evaluate(()=>state.range),0);
   assert.deepEqual(errors,[]);console.log('PASS: guest and cloud worksheets, mobile paging, saved stats, battle accounting and network retry');

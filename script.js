@@ -157,7 +157,7 @@ function showExercisePage(page, focusFirst = false) {
   $('#page-label').textContent = state.pageSize === 1 ? `Příklad ${first + 1} z ${state.count}` : `Příklady ${first + 1}–${Math.min(first + state.pageSize,state.count)} z ${state.count}`;
   $('#page-back').disabled = state.page === 0;
   $('#page-forward').disabled = state.page === pages - 1;
-  $('#check').innerHTML = state.page < pages - 1 ? state.pageSize === 1 ? 'Další příklad →' : 'Další příklady →' : '<span>✓</span> Zkontrolovat';
+  $('#check').innerHTML = state.page < pages - 1 ? state.pageSize === 1 ? 'Další příklad →' : 'Další příklady →' : state.series === 6 ? 'Nové cvičení →' : 'Další série →';
   if (focusFirst) document.querySelector(`[data-exercise="${first}"]`)?.focus({ preventScroll: true });
 }
 function validateAnswer(exercise,values) { return ExerciseRules.checks(exercise,values); }
@@ -293,10 +293,17 @@ for (const property of ['operation','range','count']) {
     state[property]=value; savePreferences(); startNewSet(true);
   }));
 }
-$('#exercise-form').addEventListener('submit',event=>{
+async function startNextSeries() {
+  if (!state.completed) return;
+  state.series=state.series===6?1:state.series+1;
+  await startNewSet();
+  document.querySelector('[data-exercise]')?.focus({preventScroll:true});
+}
+$('#exercise-form').addEventListener('submit',async event=>{
   event.preventDefault();
-  if (state.page < Math.ceil(state.count / state.pageSize) - 1) goToNextExercisePage();
-  else checkAnswers();
+  if (state.page < Math.ceil(state.count / state.pageSize) - 1) return goToNextExercisePage();
+  await checkAnswers();
+  if (state.completed) await startNextSeries();
 });
 $('#page-back').addEventListener('click',()=>showExercisePage(state.page - 1));
 $('#page-forward').addEventListener('click',goToNextExercisePage);
@@ -369,7 +376,7 @@ $('#exercise-grid').addEventListener('input',event=>{
   $('#feedback').textContent='';
 });
 $('#new-set').addEventListener('click',()=>startNewSet(state.completed && state.series===6));
-$('#next').addEventListener('click',()=>{state.series=state.series===6?1:state.series+1;startNewSet();document.querySelector('[data-exercise]')?.focus();});
+$('#next').addEventListener('click',startNextSeries);
 document.body.classList.toggle('large-text',Boolean(preferences.largeText));
 saveStatistics();startNewSet();showView('math');
 
