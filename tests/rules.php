@@ -2,11 +2,16 @@
 require __DIR__.'/../api/logic.php';
 function ensure(bool $condition): void { if(!$condition) throw new RuntimeException('Rule assertion failed'); }
 $all=[];
-foreach(['practice','battle'] as $mode) foreach(['addition','subtraction','multiplication'] as $operation) foreach([10,20] as $range) foreach([20,50,100] as $limit) {
-    $s=settings(['operation'=>$operation,'range'=>$range,'multiplicationLimit'=>$limit]);$s['mode']=$mode;$pool=exercisePool($s);
-    ensure(count($pool)>=12);
+foreach(['practice','battle'] as $mode) foreach(['addition','subtraction','multiplication','division'] as $operation) foreach([10,20,50,100,1000,0] as $range) {
+    $s=settings(['operation'=>$operation,'range'=>$range,'multiplicationLimit'=>100]);$s['mode']=$mode;$pool=exercisePool($s);
+    ensure(count($pool)>=12 && count($pool)<=400);
+    ensure(count(array_unique(array_map(fn($e)=>$e['a'].':'.$e['b'],$pool)))===count($pool));
     foreach($pool as $e) {
         $result=exerciseResult($e);
+        ensure($e['a']>0 && $e['b']>0 && $result>=0);
+        ensure($range===0 || max($e['a'],$e['b'],$result)<=$range);
+        ensure($operation!=='division' || $e['a']%$e['b']===0);
+        ensure($operation==='subtraction' || $e['type']==='direct');
         if(requiresDecomposition($e,$s)) {
             $values=[$e['a']-10,$e['b']-($e['a']-10),$result];
             ensure($values[0]>0&&$values[1]>0);

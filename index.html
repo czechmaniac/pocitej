@@ -2,14 +2,14 @@
 <html lang="cs">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#eef7fb"><meta name="description" content="Hravé procvičování sčítání a odčítání s rozkladem čísel a násobení do 100.">
+  <meta name="theme-color" content="#eef7fb"><meta name="description" content="Hravé procvičování sčítání, odčítání, násobení a dělení. Vyber si rozsah od 10 do 1000 nebo nekonečno.">
   <title>Počítáme ♡ — Malé příklady, velké pokroky</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect rx='9' width='32' height='32' fill='%23ff851b'/%3E%3Cpath d='M8 16h16M16 8v16' stroke='white' stroke-width='4'/%3E%3C/svg%3E">
-  <script src="analytics.js?v=usage-1" defer></script>
+  <script src="analytics.js?v=arithmetic-3" defer></script>
   <link rel="stylesheet" href="feedback.css?v=1"><script src="feedback.js?v=1" defer></script>
-  <link rel="stylesheet" href="style.css?v=usage-1"><script src="exercises.js?v=usage-1" defer></script><script src="script.js?v=usage-1" defer></script><script src="battle.js?v=usage-1" defer></script><script src="cloud.js?v=usage-1" defer></script>
+  <link rel="stylesheet" href="style.css?v=arithmetic-3"><script src="exercises.js?v=arithmetic-3" defer></script><script src="script.js?v=arithmetic-3" defer></script><script src="battle.js?v=arithmetic-3" defer></script><script src="cloud.js?v=arithmetic-3" defer></script>
 
-  <link rel="stylesheet" href="battle.css?v=usage-1">
+  <link rel="stylesheet" href="battle.css?v=arithmetic-3">
 </head>
 <body class="cloud-app">
 <div class="landscape" aria-hidden="true"></div>
@@ -53,7 +53,7 @@
   <main>
     <section id="math-view" aria-label="Počítání">
       <section class="worksheet panel" aria-labelledby="exercise-title">
-        <div class="worksheet-heading"><div class="title-group"><span id="series-badge">1</span><h2 id="exercise-title">Spočítej a zapiš rozklad.</h2></div><button id="keyboard-exit" class="keyboard-exit" type="button" aria-label="Zavřít psaní a vrátit se k menu">↑ Menu</button><p class="tip"><span aria-hidden="true">☀</span><span id="tip-text"></span></p></div>
+        <div class="worksheet-heading"><div class="title-group"><span id="series-badge">1</span><h2 id="exercise-title">Spočítej a vyber výsledek.</h2></div><button id="keyboard-exit" class="keyboard-exit" type="button" aria-label="Zavřít psaní a vrátit se k menu">↑ Menu</button><p class="tip"><span aria-hidden="true">☀</span><span id="tip-text"></span></p></div>
         <form id="exercise-form" novalidate><div id="exercise-grid"></div></form>
         <div id="exercise-pages" class="exercise-pages" aria-label="Stránky příkladů"><button id="page-back" type="button" aria-label="Předchozí příklady">←</button><span id="page-label" aria-live="polite"></span><button id="page-forward" type="button" aria-label="Další příklady">→</button></div>
         <p id="feedback" role="status" aria-live="polite"></p>
@@ -67,13 +67,13 @@
       <p>Výběr určuje názvy odměn. Nejvyšší titul je Dino král nebo Kari královna. Získané odměny zůstávají zachované i při změně výběru.</p>
       <p>Vyber, co chceš procvičovat. Změna operace, rozsahu nebo počtu příkladů zahájí nové cvičení o šesti sériích.</p>
       <div class="controls panel">
-        <div class="button-group operations" aria-label="Operace"><button data-operation="addition">＋ <span>Sčítání</span></button><button data-operation="subtraction">− <span>Odčítání</span></button><button data-operation="multiplication">× <span>Násobení</span></button></div>
-        <div class="control-group"><span>Rozsah čísel:</span><div id="range-options" class="button-group"><button data-range="10">do 10</button><button data-range="20">do 20</button></div><div id="multiplication-range" class="button-group" aria-label="Nejvyšší výsledek násobení" hidden><button data-multiplication-limit="20">do 20</button><button data-multiplication-limit="50">do 50</button><button data-multiplication-limit="100">do 100</button></div></div>
+        <div class="button-group operations" aria-label="Operace"><button data-operation="addition">＋ <span>Sčítání</span></button><button data-operation="subtraction">− <span>Odčítání</span></button><button data-operation="multiplication">× <span>Násobení</span></button><button data-operation="division">÷ <span>Dělení</span></button></div>
+        <div class="control-group"><span>Do kolika počítat:</span><div id="range-options" class="button-group" role="group" aria-label="Rozsah čísel"><button data-range="10">do 10</button><button data-range="20">do 20</button><button data-range="50">do 50</button><button data-range="100">do 100</button><button data-range="1000">do 1000</button><button data-range="0">∞ Nekonečno</button></div></div>
         <div class="control-group"><span>Počet příkladů:</span><div class="button-group"><button data-count="6">6</button><button data-count="9">9</button><button data-count="12">12</button></div></div>
       </div>
       <label class="settings-row"><input id="large-text" type="checkbox">Větší čísla v příkladech</label>
-      <p>Sčítání a odčítání bez přechodu přes desítku nabízí tři výsledky. Jen odčítání přes desítku vyžaduje rozklad.</p>
-      <p>U násobení vyber nejvyšší výsledek: 20, 50 nebo 100. Procvičujeme malou násobilku s čísly od 1 do 10. Vybírá se ze tří výsledků.</p>
+      <p>Vyber si operaci a rozsah. Čísla v zadání i správný výsledek se vejdou do zvoleného rozsahu. Nekonečno míchá různě velká čísla. Dělení je vždy beze zbytku.</p>
+
       <p>Přihlášený profil ukládá nastavení a pokroky na server; týdenní body se v pondělí nulují a odměny zůstávají. Host ukládá nastavení a celkové pokroky pouze v tomto prohlížeči.</p>
       <button id="settings-back" class="back-button">← Zpět na počítání</button>
     </section>

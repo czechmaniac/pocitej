@@ -100,3 +100,11 @@ button:disabled{opacity:.4;cursor:default;transform:none}
 .guest-start{background:var(--orange-light);border-color:#ffd3a9;font-weight:600;margin-top:12px}
 
 .answer-choices{display:flex;justify-content:center;gap:12px;margin:16px 0}.answer-choice{position:relative;cursor:pointer}.answer-choice input{position:absolute;opacity:0;width:100%;height:100%;margin:0}.answer-choice span{display:block;min-width:56px;padding:10px;border:2px solid #a5bbc8;border-radius:12px;text-align:center;font-size:1.6rem;background:white}.answer-choice input:checked+span{background:#dff1ff;border-color:#2477a8}.answer-choice input:focus-visible+span{outline:3px solid #ff851b}.answer-choice input.incorrect:checked+span{border-color:#b42318}.answer-choice input.correct:checked+span{border-color:#24824b}
+
+/* Shared ranges and room for longer randomly sized numbers. */
+#range-options{flex-wrap:wrap}
+.exercise.wide-numbers .equation{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr);font-size:clamp(17px,1.5vw,23px)}
+.exercise.wide-numbers .answer-choices{gap:6px}
+.exercise.wide-numbers .answer-choice{min-width:0;flex:1}
+.exercise.wide-numbers .answer-choice span{min-width:0;padding:10px 4px;font-size:clamp(15px,1.3vw,20px)}
+@media(max-width:650px){.exercise.wide-numbers .equation{font-size:20px}.exercise.wide-numbers .answer-choice span{font-size:19px}}

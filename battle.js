@@ -192,8 +192,8 @@
   try { const session=await window.PracticeSession.next(prefs);if(revision!==questionRevision||game!==currentGame)return;
    game.currentExercise={...(session?session.exercise:generate(prefs)),session,hadMistake:false,rejected:[]};game.battle.processingAnswer=false;
   } catch(error) { if(game!==currentGame||revision!==questionRevision)return;window.UsageAnalytics?.activity('activity_error',{error_kind:'battle_load'});message(error.message+' Použij novou výzvu.');game.active=false;q('#b-outcome').hidden=false;text('#b-outcome-title','Připojení se nezdařilo');text('#b-restart','ZKUSIT ZNOVU');render();return; }
-  const e=game.currentExercise,direct=e.type==='direct',op=e.operation==='addition'?'+':e.operation==='multiplication'?'×':'−';
-  root.classList.toggle('battle-direct',direct);root.classList.toggle('battle-large-text',Boolean(prefs.largeText));
+  const e=game.currentExercise,direct=e.type==='direct',op=ExerciseRules.sign(e.operation);
+  root.classList.toggle('battle-wide-numbers',Math.max(e.a,e.b,e.result)>99);root.classList.toggle('battle-direct',direct);root.classList.toggle('battle-large-text',Boolean(prefs.largeText));
   q('#b-decomposition').hidden=direct;q('#b-choices').hidden=!direct;q('#b-attack').hidden=direct;q('#b-hint').hidden=direct;
   text('#b-question',`${e.a} ${op} ${e.b} = ?`);text('#b-split-number',e.b);text('#b-first-number',e.a);text('#b-hint','Rozlož druhé číslo. Po prvním odečtení musí zbýt 10.');
   q('#b-choices').innerHTML=direct?e.choices.map(n=>`<button class="battle-choice" type="button" value="${n}" aria-label="Odpověď ${n}">${n}</button>`).join(''):'';

@@ -13,11 +13,12 @@ const server=spawn(process.env.PHP_BINARY||'php',['-n','-S','127.0.0.1:8765','-t
   await page.route('**/googletagmanager.com/**',route=>route.abort());
   await page.goto('http://127.0.0.1:8765');
   await page.locator('#guest-start').click();
-  async function set(op,range){await page.locator('[data-view="settings"]').click();await page.locator(`[data-operation="${op}"]`).click();if(op!=='multiplication')await page.locator(`[data-range="${range}"]`).click();await page.locator('#settings-back').click();}
+  async function set(op,range){await page.locator('[data-view="settings"]').click();await page.locator(`[data-operation="${op}"]`).click();await page.locator(`[data-range="${range}"]`).click();await page.locator('#settings-back').click();}
   async function solve(){return page.evaluate(()=>{for(let i=0;i<state.exercises.length;i++){const e=state.exercises[i];if(e.type==='direct')document.querySelector(`[data-exercise="${i}"][value="${e.result}"]`).click();else [e.decomposition1,e.decomposition2,e.result].forEach((v,j)=>{document.querySelector(`[data-exercise="${i}"][data-part="${j}"]`).value=v;});}checkAnswers();return {completed:state.completed,stats:statistics};});}
-  for(const [op,range] of [['addition',10],['addition',20],['subtraction',10],['subtraction',20],['multiplication',20]]) {
+  for(const op of ['addition','subtraction','multiplication','division']) for(const range of [10,20,50,100,1000,0]) {
    await set(op,range);
    assert(await page.evaluate(()=>state.exercises.every(e=>e.type==='direct'?e.choices.length===3:new Set([e.decomposition1,e.decomposition2]).size>0)));
+   if(op!=='subtraction'){assert.equal(await page.locator('.tip').isVisible(),false);assert(!(await page.locator('#exercise-title').textContent()).includes('rozklad'));}
    const result=await solve();assert(result.completed);
    await page.locator('#next').click();
   }
@@ -110,11 +111,33 @@ const server=spawn(process.env.PHP_BINARY||'php',['-n','-S','127.0.0.1:8765','-t
   assert(minuend>10&&minuend-subtrahend<10);
   await page.locator('.battle-choice[value="'+(minuend-subtrahend)+'"]').click();await page.waitForTimeout(650);
   assert.equal(stats.solved,8);assert.equal(stats.correct,2);
+  await set('division',1000);await page.locator('[data-view="battle"]').click();
+  await page.waitForFunction(()=>document.querySelector('#b-question').textContent.includes('÷')&&!document.querySelector('.battle-choice')?.disabled);
+  const divisionQuestion=await page.locator('#b-question').textContent(),[dividend,divisor]=divisionQuestion.match(/\d+/g).map(Number);
+  const beforeDivision=stats.correct;await page.locator(`.battle-choice[value="${dividend/divisor}"]`).click();await page.waitForTimeout(650);
+  assert.equal(stats.correct,beforeDivision+1);assert.equal(await page.locator('#b-hint').isVisible(),false);
+  // Shared operation/range settings also work for signed-in profiles.
+  for(const op of ['addition','subtraction','multiplication','division']) for(const range of [10,20,50,100,1000,0]) {
+   await set(op,range);await page.waitForFunction(()=>!waiting);
+   assert.equal(await page.locator(`[data-range="${range}"]`).getAttribute('aria-pressed'),'true');
+   await page.evaluate(async()=>{
+    for(let i=0;i<state.exercises.length;i++){
+     const e=state.exercises[i];
+     if(e.type==='direct'){document.querySelector(`[data-exercise="${i}"][value="${e.result}"]`).click();await queue;}
+     else [e.decomposition1,e.decomposition2,e.result].forEach((n,j)=>document.querySelector(`[data-exercise="${i}"][data-part="${j}"]`).value=n);
+    }
+    await checkAnswers();
+   });
+   assert.equal(await page.evaluate(()=>state.completed),true);
+   if(op!=='subtraction')assert.equal(await page.locator('.tip').isVisible(),false);
+  }
   const tracked=await page.evaluate(()=>window.dataLayer.filter(item=>item[0]==='event').map(item=>({name:item[1],params:item[2]})));
   for(const name of ['pocitej_open','practice_start','practice_complete','settings_change','view_section','battle_start'])assert(tracked.some(e=>e.name===name),'Missing event '+name);
   assert.equal(tracked.filter(e=>e.name==='pocitej_open').length,1);
   assert(tracked.some(e=>e.name==='settings_change'&&e.params.setting==='operation'&&e.params.operation==='subtraction'));
   assert(!JSON.stringify(tracked).includes('nickname'));assert(!JSON.stringify(tracked).includes('pin'));
+  await page.reload();await page.waitForFunction(()=>serverSetId!==null&&!waiting);
+  assert.equal(await page.evaluate(()=>state.operation),'division');assert.equal(await page.evaluate(()=>state.range),0);
   assert.deepEqual(errors,[]);console.log('PASS: guest and cloud worksheets, mobile paging, saved stats, battle accounting and network retry');
  } finally {if(browser)await browser.close();server.kill();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
