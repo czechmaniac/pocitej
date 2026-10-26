@@ -1,0 +1,3 @@
+# Preserve generated upstream parser whitespace in the vendored distribution.
+assets/chess/chess-engine.js -whitespace linguist-vendored
+api/vendor/p-chess/*.php linguist-vendored
