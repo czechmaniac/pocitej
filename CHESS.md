@@ -47,6 +47,6 @@ Server používá [p-chess/chess](https://github.com/p-chess/chess), MIT, commit
 
 ## Úprava dominantní hrací plochy
 
-Viditelná galerie figurek a panel Průběh partie jsou odstraněné. Deska má hlavní prostor podle výšky okna, ovládací panely jsou v jednom sloupci o šířce 300 px. Při nedostatku výšky lze posouvat jen boční ovládání. Na telefonu se panely skládají pod desku. Velikost se počítá při dostupné šířce, aby se z předchozího zalomeného stavu postupně nezmenšovala, a nezávisí na posunutí stránky.
+Viditelná galerie figurek a panel Průběh partie jsou odstraněné. Deska má hlavní prostor podle výšky okna, ovládací panely jsou v kompaktním sloupci o šířce 280 px u pravého kraje. Celý sloupec nemá vlastní posuvník. Seznam hráčů má pevnou výšku 112 px na dva hráče a vlastní posouvání; seznam pozvánek se posouvá při překročení 132 px. Na telefonu se panely skládají pod desku. Velikost se počítá při dostupné šířce, aby se z předchozího zalomeného stavu postupně nezmenšovala, a nezávisí na posunutí stránky.
 
 Tato změna rozložení aktualizuje pouze `chess.js`, `chess.css` a `index.html`. Nevyžaduje další SQL; předpokládá již nasazenou předchozí verzi s hodinami a žebříčkem.

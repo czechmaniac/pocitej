@@ -198,7 +198,7 @@
   sidebar.style.removeProperty('grid-template-columns');
   if(innerWidth<=900||layout.clientWidth<760){root.style.removeProperty('--chess-card-width');root.style.removeProperty('--chess-room-height');return;}
   const style=getComputedStyle(card),padding=parseFloat(style.paddingLeft)+parseFloat(style.paddingRight)+2;
-  const availableWidth=Math.max(280,layout.clientWidth-300-16-padding);
+  const availableWidth=Math.max(280,layout.clientWidth-sidebar.getBoundingClientRect().width-16-padding);
   // Measure at the available width, never at the previous (possibly wrapped) size.
   root.style.setProperty('--chess-card-width',(availableWidth+padding)+'px');
   const chrome=card.getBoundingClientRect().height-board.getBoundingClientRect().height;

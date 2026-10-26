@@ -53,5 +53,25 @@ body.chess-active .app{max-width:none}
 #chess-view .chess-card{padding:14px;min-width:0}#chess-view .chess-card h3{font-size:18px;margin-bottom:8px}
 #chess-view .chess-player strong,#chess-view .chess-player small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;overflow-wrap:normal}
 #chess-view .chess-player{flex-wrap:nowrap}
-@media(min-width:901px){#chess-view .chess-layout{grid-template-columns:minmax(0,var(--chess-card-width,700px)) 300px;gap:16px;justify-content:center}#chess-view .chess-sidebar{width:300px;max-height:var(--chess-room-height,calc(100dvh - 150px));overflow-y:auto;overscroll-behavior:contain}}
+@media(min-width:901px){#chess-view .chess-layout{grid-template-columns:minmax(0,1fr) 280px;gap:16px}#chess-view .chess-board-card{width:var(--chess-card-width,100%);max-width:100%!important;justify-self:center}#chess-view .chess-sidebar{width:280px;max-height:none;overflow:visible}}
 @media(max-width:900px){#chess-view .chess-layout{grid-template-columns:minmax(0,1fr)}#chess-view .chess-sidebar{width:100%;max-height:none;overflow:visible}}
+/* Only the player and invitation lists scroll, never the whole sidebar. */
+#chess-view .chess-sidebar{align-content:start;gap:8px}
+#chess-view .chess-sidebar .chess-card{padding:12px;border-radius:20px}
+#chess-view .chess-sidebar h3{margin:0 0 6px;font-size:17px}
+#chess-view .chess-sidebar .chess-muted{font-size:12px;line-height:1.35;margin:6px 0}
+#chess-view .chess-sidebar label{font-size:12px;margin:6px 0}
+#chess-view .chess-sidebar select{font-size:14px;padding:7px 8px;margin-top:4px;min-height:36px}
+#chess-view #chess-pc-options summary{padding:6px 0;font-size:13px}
+#chess-view .chess-sidebar button{font-size:12px;min-height:36px;padding:7px 9px}
+#chess-view .chess-search{gap:6px;margin:6px 0}
+#chess-view .chess-search input{height:36px;font-size:16px}
+#chess-players{height:112px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+#chess-players .chess-person{box-sizing:border-box;height:56px;padding:6px 0;gap:6px}
+#chess-players .chess-person strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#chess-players .chess-person small{margin-top:2px;font-size:11px}
+#chess-players .chess-user-avatar{width:28px;height:28px;font-size:15px}
+#chess-invites{max-height:132px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+#chess-view #chess-invites .chess-invite{padding:8px;margin:6px 0}
+#chess-view #chess-invites .chess-invite p{font-size:12px;margin-bottom:5px}
+@media(max-width:700px){#chess-view .chess-sidebar button{min-height:44px}}
