@@ -15,3 +15,5 @@ U rozsahů nad 20 se generuje nejvýše 240 unikátních kandidátů s omezeným
 Přepsat soubory index.html, script.js, cloud.js, exercises.js, battle.js, analytics.js, style.css, battle.css a api/logic.php. Zachovat adresář api. index.html obsahuje nové verze odkazů pro vyprázdnění mezipaměti skriptů a stylů. Při nasazení nejprve nahrát ostatní soubory a index.html jako poslední. Poté načíst Nové příklady.
 
 Databázové schéma ani konfigurační soubory se nemění.
+
+Možnosti odpovědí: správný výsledek náhodně střídá číselnou velikost vůči ostatním (nejmenší/prostřední/největší podle nezáporného oboru). Pořadí tlačítek je nezávisle promíchané. Platí pro všechny operace, místní i serverové generování a souboje.

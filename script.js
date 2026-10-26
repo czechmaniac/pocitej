@@ -244,6 +244,8 @@ function checkAnswers() {
   saveStatistics();
 }
 function showView(view) {
+  window.ChessRoom?.show(false);
+  $('#chess-view').hidden=true;
   window.BattleGame?.show(view === "battle");
   state.view = view;
   updateKeyboardLayout();

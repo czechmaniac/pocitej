@@ -33,4 +33,5 @@ $e=['checked'=>false,'solved'=>false];recordAnswer($e,$w,false);recordAnswer($e,
 ensure($w===['solved'=>1,'correct'=>0,'streak'=>0,'best_streak'=>0]&&$e['solved']);
 $e=['checked'=>false,'solved'=>false];recordAnswer($e,$w,true);recordAnswer($e,$w,true);
 ensure($w===['solved'=>2,'correct'=>1,'streak'=>1,'best_streak'=>1]);
+foreach([0,1,2,12,1000] as $result){$ranks=[];$positions=[];for($i=0;$i<150;$i++){$c=answerChoices($result);ensure(count($c)===3&&count(array_unique($c))===3);$positions[array_search($result,$c,true)]=true;sort($c);$ranks[array_search($result,$c,true)]=true;}ensure(count($ranks)===min(3,$result+1)&&count($positions)===3);}
 echo json_encode($all,JSON_THROW_ON_ERROR);

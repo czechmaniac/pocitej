@@ -24,6 +24,14 @@ function requiresDecomposition(array $e, array $s): bool {
 function exerciseResult(array $e): int {
     return $e['operation']==='addition' ? $e['a']+$e['b'] : ($e['operation']==='multiplication' ? $e['a']*$e['b'] : ($e['operation']==='division' ? intdiv($e['a'],$e['b']) : $e['a']-$e['b']));
 }
+function answerChoices(int $result): array {
+    $spread=min(20,max(3,(int)ceil($result/4)));
+    $lower=$result>0?range($result-1,max(0,$result-$spread)):[];
+    $upper=range($result+1,$result+$spread);shuffle($lower);shuffle($upper);
+    $rank=random_int(0,min(2,$result));
+    $choices=[$result,...array_slice($lower,0,$rank),...array_slice($upper,0,2-$rank)];shuffle($choices);
+    return $choices;
+}
 function exercisePool(array $s): array {
     $pool=[];$op=$s['operation'];$range=$s['range'];
     $pairs=[];
@@ -52,9 +60,7 @@ function exercisePool(array $s): array {
         if($result<0||($range>0 && $result>$range)) continue;
         $e['type']=requiresDecomposition($e,$s)?'decomposition':'direct';
         if($e['type']==='direct') {
-            $wrong=[];
-            for($d=1;count($wrong)<2;$d++) foreach([$result-$d,$result+$d] as $n) if($n>=0&&count($wrong)<2) $wrong[]=$n;
-            $e['choices']=[$result,...$wrong];shuffle($e['choices']);
+            $e['choices']=answerChoices($result);
         }
         $pool[]=$e;
     }

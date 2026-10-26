@@ -31,3 +31,5 @@ console.log(`PASS: ${count} JS/PHP exercise contracts, unique choices, validatio
 assert.equal(rules.decorate({operation:'subtraction',a:1000,b:995}).type,'direct');
 assert.equal(rules.decorate({operation:'division',a:1000,b:2}).result,500);
 assert.equal(rules.sign('division'),'÷');
+
+for(const result of [0,1,2,12,1000]){const ranks=new Set(),positions=new Set();for(let i=0;i<150;i++){const choices=rules.answerChoices(result);assert.equal(choices.length,3);assert.equal(new Set(choices).size,3);assert(choices.every(n=>n>=0&&Number.isInteger(n)));ranks.add([...choices].sort((a,b)=>a-b).indexOf(result));positions.add(choices.indexOf(result));}assert.equal(ranks.size,Math.min(3,result+1));assert.equal(positions.size,3);}

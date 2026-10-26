@@ -22,7 +22,7 @@ const GOOGLE_ANALYTICS_ID = 'G-1DKYKCDZ49';
   // Only fixed, low-cardinality product settings are allowed into GA.
   const events = new Set(['pocitej_open','view_section','settings_change','practice_start','practice_complete','battle_start','battle_complete','battle_pause','battle_resume','battle_tool','activity_error']);
   const allowed = {
-    screen: ['math','battle','settings','stats','rewards','leaderboard'],
+    screen: ['math','chess','battle','settings','stats','rewards','leaderboard'],
     setting: ['operation','range','multiplicationLimit','count','largeText'],
     tool: ['potion','shield','special'],
     error_kind: ['battle_load','battle_answer']
