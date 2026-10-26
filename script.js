@@ -75,7 +75,7 @@ function renderExercises() {
   $('#exercise-grid').innerHTML=state.exercises.map((e,index)=>{
     const sign=ExerciseRules.sign(e.operation);
     const answers=e.type==='direct' ? '<div class="answer-choices" role="group" aria-label="Vyber výsledek">'+e.choices.map(n=>'<label class="answer-choice"><input type="radio" name="answer-'+index+'" data-exercise="'+index+'" value="'+n+'" aria-describedby="status-'+index+'"><span>'+n+'</span></label>').join('')+'</div>' : '<svg class="branches" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true"><path d="M48 0 L34 12 M48 0 L62 12"/></svg><div class="answer-row"><span>'+e.a+'</span><span>−</span>'+inputMarkup(index,0,'První část rozkladu')+'<span>−</span>'+inputMarkup(index,1,'Druhá část rozkladu')+'<span>=</span>'+inputMarkup(index,2,'Výsledek')+'</div>';
-    return '<article class="exercise'+(Math.max(e.a,e.b,e.result)>99?' wide-numbers':'')+'" aria-label="Příklad '+(index+1)+'"><div class="equation"><span>'+e.a+'</span><span>'+sign+'</span><span class="operand">'+e.b+'</span><span>=</span><span class="question">?</span></div>'+answers+'<p class="exercise-status" aria-live="polite" id="status-'+index+'"></p></article>';
+    return '<article class="exercise'+(Math.max(e.a,e.b,e.result)>99?' wide-numbers':'')+'"'+(index < state.page*state.pageSize || index >= (state.page+1)*state.pageSize ? ' hidden' : '')+' aria-label="Příklad '+(index+1)+'"><div class="equation"><span>'+e.a+'</span><span>'+sign+'</span><span class="operand">'+e.b+'</span><span>=</span><span class="question">?</span></div>'+answers+'<p class="exercise-status" aria-live="polite" id="status-'+index+'"></p></article>';
   }).join('');
 }
 function inputMarkup(index, part, label, maxLength = 2) {
@@ -341,9 +341,12 @@ $('#exercise-grid').addEventListener('focusin', () => {
   keyboardDismissed = false;
   updateKeyboardLayout();
 });
-$('#exercise-grid').addEventListener('focusout', () => {
-  scheduleLayout();
-  requestAnimationFrame(updateKeyboardLayout);
+$('#exercise-grid').addEventListener('focusout', event => {
+  // Only a text field can close the keyboard; radio checks do not change layout.
+  if (event.target.matches('.answer-row input')) {
+    scheduleLayout();
+    requestAnimationFrame(updateKeyboardLayout);
+  }
 });
 window.addEventListener('pageshow', updateKeyboardLayout);
 $('#keyboard-exit').addEventListener('click', () => {

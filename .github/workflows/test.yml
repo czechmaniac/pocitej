@@ -26,6 +26,7 @@ jobs:
       - run: node tests/rules.cjs
       - run: php -l api/index.php && php -l api/logic.php && php -l api/feedback.php && php -l api/feedback-admin.php && php -l api/feedback-common.php
       - run: node tests/browser.cjs
+      - run: node tests/stability-browser.cjs
       - run: node tests/feedback-browser.cjs
       - run: node tests/api.cjs
         env:
